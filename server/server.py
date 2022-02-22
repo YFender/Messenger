@@ -9,14 +9,14 @@ class Server:
         self.ip = ip
         self.port = port
         self.all_client = []
-        
+
         # Запускаем прослушивание соединений
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((self.ip, self.port))
         self.server.listen(0)
         threading.Thread(target=self.connect_handler).start()
         print('Сервер запущен!')
-        
+
 
     # Обрабатываем входящие соединения
     def connect_handler(self):
@@ -44,7 +44,7 @@ class Server:
                 if client != client_socket:
                     client.send(message)
             time.sleep(1)
-            
+
 
 
 myserver = Server('127.0.0.1', 5555)

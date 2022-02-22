@@ -13,6 +13,8 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.login_pushbutton.clicked.connect(self.login)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
 
+        self.ui.pushButton_delete_user.setEnabled(False)
+
     def login(self):
         self.w2 = Login()
         self.w2.show()

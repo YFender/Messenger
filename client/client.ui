@@ -75,13 +75,6 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="2" colspan="2">
-           <widget class="QPushButton" name="pushButton_add_user">
-            <property name="text">
-             <string>Добавить</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="4" rowspan="3" colspan="3">
            <widget class="QTextBrowser" name="textBrowser_chat">
             <property name="html">
@@ -120,6 +113,20 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="text">
              <string>Отправить сообщение</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QPushButton" name="pushButton_add_user">
+            <property name="text">
+             <string>Добавить</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QPushButton" name="pushButton_delete_user">
+            <property name="text">
+             <string>Удалить</string>
             </property>
            </widget>
           </item>

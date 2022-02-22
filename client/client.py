@@ -45,9 +45,6 @@ class Ui_Client_MainWindow(object):
         self.label_contacts.setAlignment(QtCore.Qt.AlignCenter)
         self.label_contacts.setObjectName("label_contacts")
         self.gridLayout_3.addWidget(self.label_contacts, 0, 2, 1, 2)
-        self.pushButton_add_user = QtWidgets.QPushButton(self.tab_chat)
-        self.pushButton_add_user.setObjectName("pushButton_add_user")
-        self.gridLayout_3.addWidget(self.pushButton_add_user, 2, 2, 1, 2)
         self.textBrowser_chat = QtWidgets.QTextBrowser(self.tab_chat)
         self.textBrowser_chat.setObjectName("textBrowser_chat")
         self.gridLayout_3.addWidget(self.textBrowser_chat, 0, 4, 3, 3)
@@ -71,6 +68,12 @@ class Ui_Client_MainWindow(object):
         self.pushButton_send_message.setFont(font)
         self.pushButton_send_message.setObjectName("pushButton_send_message")
         self.gridLayout_3.addWidget(self.pushButton_send_message, 5, 2, 1, 5)
+        self.pushButton_add_user = QtWidgets.QPushButton(self.tab_chat)
+        self.pushButton_add_user.setObjectName("pushButton_add_user")
+        self.gridLayout_3.addWidget(self.pushButton_add_user, 2, 2, 1, 1)
+        self.pushButton_delete_user = QtWidgets.QPushButton(self.tab_chat)
+        self.pushButton_delete_user.setObjectName("pushButton_delete_user")
+        self.gridLayout_3.addWidget(self.pushButton_delete_user, 2, 3, 1, 1)
         self.tabWidget.addTab(self.tab_chat, "")
         self.tab_settings = QtWidgets.QWidget()
         self.tab_settings.setObjectName("tab_settings")
@@ -113,7 +116,6 @@ class Ui_Client_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         Client_MainWindow.setWindowTitle(_translate("Client_MainWindow", "MainWindow"))
         self.label_contacts.setText(_translate("Client_MainWindow", "Контакты"))
-        self.pushButton_add_user.setText(_translate("Client_MainWindow", "Добавить"))
         self.textBrowser_chat.setHtml(_translate("Client_MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -121,6 +123,8 @@ class Ui_Client_MainWindow(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.pushButton_send_message.setText(_translate("Client_MainWindow", "Отправить сообщение"))
+        self.pushButton_add_user.setText(_translate("Client_MainWindow", "Добавить"))
+        self.pushButton_delete_user.setText(_translate("Client_MainWindow", "Удалить"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_chat), _translate("Client_MainWindow", "Чат"))
         self.login_pushbutton.setText(_translate("Client_MainWindow", "Логин"))
         self.reg_pushbutton.setText(_translate("Client_MainWindow", "Регистрация"))
