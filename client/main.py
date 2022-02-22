@@ -9,7 +9,7 @@ class MyWin(QtWidgets.QMainWindow):
         super(MyWin, self).__init__()
         self.ui = Ui_Client_MainWindow()
         self.ui.setupUi(self)
-        
+
         self.ui.login_pushbutton.clicked.connect(self.login)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
 
