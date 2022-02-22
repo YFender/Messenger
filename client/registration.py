@@ -11,13 +11,13 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(400, 600)
-        MainWindow.setMinimumSize(QtCore.QSize(400, 600))
-        MainWindow.setMaximumSize(QtCore.QSize(400, 600))
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
+class Ui_Registration(object):
+    def setupUi(self, Registration):
+        Registration.setObjectName("Registration")
+        Registration.resize(400, 600)
+        Registration.setMinimumSize(QtCore.QSize(400, 600))
+        Registration.setMaximumSize(QtCore.QSize(400, 600))
+        self.centralwidget = QtWidgets.QWidget(Registration)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -93,16 +93,16 @@ class Ui_MainWindow(object):
         self.pushButton_reg.setObjectName("pushButton_reg")
         self.verticalLayout_2.addWidget(self.pushButton_reg)
         self.verticalLayout.addLayout(self.verticalLayout_2)
-        MainWindow.setCentralWidget(self.centralwidget)
+        Registration.setCentralWidget(self.centralwidget)
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.retranslateUi(Registration)
+        QtCore.QMetaObject.connectSlotsByName(Registration)
 
-    def retranslateUi(self, MainWindow):
+    def retranslateUi(self, Registration):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "Адрес эл. почты"))
-        self.label_2.setText(_translate("MainWindow", "Логин"))
-        self.label_3.setText(_translate("MainWindow", "Пароль"))
-        self.label_4.setText(_translate("MainWindow", "Повторите пароль"))
-        self.pushButton_reg.setText(_translate("MainWindow", "Зарегистрироваться"))
+        Registration.setWindowTitle(_translate("Registration", "MainWindow"))
+        self.label.setText(_translate("Registration", "Адрес эл. почты"))
+        self.label_2.setText(_translate("Registration", "Логин"))
+        self.label_3.setText(_translate("Registration", "Пароль"))
+        self.label_4.setText(_translate("Registration", "Повторите пароль"))
+        self.pushButton_reg.setText(_translate("Registration", "Зарегистрироваться"))
