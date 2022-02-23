@@ -3,6 +3,15 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from client import *
 from login import *
 from registration import *
+import sqlite3
+
+conn = sqlite3.connect('./Chinook_Sqlite.sqlite')
+cursor = conn.cursor()
+cursor.execute("SELECT Name FROM Artist ORDER BY Name")
+results = cursor.fetchall()
+
+for i in results:
+    print(i)
 
 class MyWin(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
