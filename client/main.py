@@ -4,14 +4,17 @@ from client import *
 from login import *
 from registration import *
 import sqlite3
+import os
 
-conn = sqlite3.connect('./Chinook_Sqlite.sqlite')
+if not os.path.isfile("Contacts.sqlite"):
+    conn = sqlite3.connect("Contacts.sqlite")
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
+    conn.close()
+
+conn = sqlite3.connect('./Contacts.sqlite')
 cursor = conn.cursor()
-cursor.execute("SELECT Name FROM Artist ORDER BY Name")
-results = cursor.fetchall()
 
-for i in results:
-    print(i)
 
 class MyWin(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
@@ -23,6 +26,14 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.reg_pushbutton.clicked.connect(self.registration)
 
         self.ui.pushButton_delete_user.setEnabled(False)
+
+        self.read_contacts()
+
+    def read_contacts(self):
+        cursor.execute("SELECT ContactName FROM Contacts")
+        results = cursor.fetchall()
+        for i in results:
+            self.ui.listWidget.addItem(i[0])
 
     def login(self):
         self.w2 = Login()
