@@ -5,18 +5,24 @@ from login import *
 from registration import *
 import sqlite3
 import os
+import socket
 
 if not os.path.isfile("Contacts.sqlite"):
     conn = sqlite3.connect("Contacts.sqlite")
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
+    cursor.execute(
+        "CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
     conn.close()
 
 conn = sqlite3.connect('./Contacts.sqlite')
 cursor = conn.cursor()
 
+sock = socket.socket()
+sock.connect(("localhost", 5555))
+
 
 class MyWin(QtWidgets.QMainWindow):
+
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         self.ui = Ui_Client_MainWindow()
@@ -26,6 +32,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.reg_pushbutton.clicked.connect(self.registration)
 
         self.ui.pushButton_delete_user.setEnabled(False)
+        self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
 
         self.read_contacts()
 
@@ -33,7 +40,8 @@ class MyWin(QtWidgets.QMainWindow):
         cursor.execute("SELECT ContactName FROM Contacts")
         results = cursor.fetchall()
         for i in results:
-            self.ui.listWidget.addItem(i[0])
+            print(i[0])
+            self.ui.listWidget_contacts.addItem(i[0])
 
     def login(self):
         self.w2 = Login()
@@ -43,17 +51,23 @@ class MyWin(QtWidgets.QMainWindow):
         self.w3 = Registration()
         self.w3.show()
 
+    def select_contact(self):
+        pass
+
+
 class Login(QtWidgets.QMainWindow):
     def __init__(self):
         super(Login, self).__init__()
         self.ui = Ui_Login()
         self.ui.setupUi(self)
 
+
 class Registration(QtWidgets.QMainWindow):
     def __init__(self):
         super(Registration, self).__init__()
         self.ui = Ui_Registration()
         self.ui.setupUi(self)
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
