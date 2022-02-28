@@ -1,11 +1,19 @@
 import socket
 
-sock = socket.socket()
-sock.connect(("localhost", 5555))
+class Client():
+    #def __init__(self):
 
-while True:
-    print("vvedite: ")
-    a = input()
-    sock.send(a.encode())
-    data = sock.recv(1024)
-    print(data)
+
+    def mainloop(self):
+        while True:
+            self.sock = socket.socket()
+            a = input(">")
+            if a!="":
+                self.sock.connect(("localhost", 5555))
+                self.sock.send(a.encode())
+                self.data = self.sock.recv(1024)
+                print(self.data)
+                self.sock.detach()
+
+if __name__ == "__main__":
+    Client().mainloop()
