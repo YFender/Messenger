@@ -3,6 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from client import *
 from login import *
 from registration import *
+from add_contact import *
 import sqlite3
 import os
 import socket
@@ -14,11 +15,23 @@ if not os.path.isfile("Contacts.sqlite"):
         "CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
     conn.close()
 
+try:
+    login = sqlite3.connect("./user_log.sqlite")
+    login_cursor = login.cursor()
+    login_cursor.execute("SELECT * FROM User")
+
+    user_login = login_cursor.fetchall()[0][1]
+    user_password = login_cursor.fetchall()[0][2]
+
+    login.close()
+except Exception:
+    login.close()
+
 conn = sqlite3.connect('./Contacts.sqlite')
 cursor = conn.cursor()
 
-sock = socket.socket()
-sock.connect(("localhost", 5555))
+#sock = socket.socket()
+#sock.connect(("localhost", 5555))
 
 
 class MyWin(QtWidgets.QMainWindow):
@@ -30,6 +43,7 @@ class MyWin(QtWidgets.QMainWindow):
 
         self.ui.login_pushbutton.clicked.connect(self.login)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
+        self.ui.pushButton_add_contact.clicked.connect(self.add_contacts)
 
         self.ui.pushButton_delete_user.setEnabled(False)
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
@@ -54,6 +68,10 @@ class MyWin(QtWidgets.QMainWindow):
     def select_contact(self):
         pass
 
+    def add_contacts(self):
+        self.w4 = Add_contacts()
+        self.w4.show()
+
 
 class Login(QtWidgets.QMainWindow):
     def __init__(self):
@@ -68,6 +86,11 @@ class Registration(QtWidgets.QMainWindow):
         self.ui = Ui_Registration()
         self.ui.setupUi(self)
 
+class Add_contacts(QtWidgets.QMainWindow):
+    def __init__(self):
+        super(Add_contacts, self).__init__()
+        self.ui = Ui_Add_contact()
+        self.ui.setupUi(self)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
