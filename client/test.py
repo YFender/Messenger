@@ -9,7 +9,7 @@ class Client():
             self.sock = socket.socket()
             a = input(">")
             if a!="":
-                self.sock.connect(("localhost", 5555))
+                self.sock.connect(("localhost", 9090))
                 self.sock.send(a.encode())
                 self.data = self.sock.recv(1024)
                 print(self.data)
