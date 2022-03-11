@@ -53,8 +53,13 @@ class Server_http(BaseHTTPRequestHandler):
 
         print("\n", self.path)
         if self.path == "/login":
-            login = data['login']
-            password = data['password']
+
+            login = str(data['login']).replace(
+                "[", "").replace("]", "").replace("'", "")
+
+            password = str(data['password']).replace(
+                "[", "").replace("]", "").replace("'", "")
+            print(login, password)
             cursor.execute(
                 f'SELECT * FROM Users WHERE Login = "{login}" AND Password = "{password}" ')
             result = cursor.fetchall()
