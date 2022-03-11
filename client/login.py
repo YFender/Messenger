@@ -23,7 +23,8 @@ class Ui_Login(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.gridLayout = QtWidgets.QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout.addItem(spacerItem, 0, 0, 1, 1)
         self.label_login = QtWidgets.QLabel(self.centralwidget)
         font = QtGui.QFont()
@@ -40,25 +41,30 @@ class Ui_Login(object):
         self.pushButton_authorize.setObjectName("pushButton_authorize")
         self.gridLayout.addWidget(self.pushButton_authorize, 6, 0, 1, 1)
         self.lineEdit_login = QtWidgets.QLineEdit(self.centralwidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
-        sizePolicy.setHeightForWidth(self.lineEdit_login.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.lineEdit_login.sizePolicy().hasHeightForWidth())
         self.lineEdit_login.setSizePolicy(sizePolicy)
         self.lineEdit_login.setMinimumSize(QtCore.QSize(200, 50))
         self.lineEdit_login.setObjectName("lineEdit_login")
         self.gridLayout.addWidget(self.lineEdit_login, 2, 0, 1, 1)
         self.lineEdit_password = QtWidgets.QLineEdit(self.centralwidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.lineEdit_password.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.lineEdit_password.sizePolicy().hasHeightForWidth())
         self.lineEdit_password.setSizePolicy(sizePolicy)
         self.lineEdit_password.setMinimumSize(QtCore.QSize(200, 50))
         self.lineEdit_password.setMaximumSize(QtCore.QSize(399, 120))
         self.lineEdit_password.setObjectName("lineEdit_password")
         self.gridLayout.addWidget(self.lineEdit_password, 4, 0, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem1 = QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout.addItem(spacerItem1, 5, 0, 1, 1)
         self.label_password = QtWidgets.QLabel(self.centralwidget)
         font = QtGui.QFont()
@@ -77,5 +83,6 @@ class Ui_Login(object):
         _translate = QtCore.QCoreApplication.translate
         Login.setWindowTitle(_translate("Login", "MainWindow"))
         self.label_login.setText(_translate("Login", "Логин"))
-        self.pushButton_authorize.setText(_translate("Login", "Авторизоваться"))
+        self.pushButton_authorize.setText(
+            _translate("Login", "Авторизоваться"))
         self.label_password.setText(_translate("Login", "Пароль"))

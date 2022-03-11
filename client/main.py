@@ -58,7 +58,7 @@ class MyWin(QtWidgets.QMainWindow):
             self.ui.listWidget_contacts.addItem(i[0])
 
     def login(self):
-        self.w2 = Login()
+        self.w2 = Login(self)
         self.w2.show()
 
     def registration(self):
@@ -74,20 +74,37 @@ class MyWin(QtWidgets.QMainWindow):
 
 
 class Login(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, parent=None):
         super(Login, self).__init__()
         self.ui = Ui_Login()
         self.ui.setupUi(self)
+        self.parent = parent
+
+        self.parent.ui.tabWidget.setEnabled(False)
 
         self.ui.pushButton_authorize.clicked.connect(self.login)
 
     def login(self):
         if self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "":
             try:
-                data = {"login": self.ui.lineEdit_login.text(
-                ), "password": self.ui.lineEdit_password.text()}
+                data = {"login": self.ui.lineEdit_login.text().lower(
+                ), "password": self.ui.lineEdit_password.text().lower()}
                 response = requests.post(
                     "http://localhost:8080/login", data=data)
+                if str(response) == "<Response [404]>":
+                    app = QtWidgets.QApplication(sys.argv)
+                    window = QtWidgets.QWidget(flags=QtCore.Qt.Dialog)
+                    window.setWindowTitle("Успешно")
+                    window.resize(300, 70)
+                    horizontalLayout = QtWidgets.QHBoxLayout(window)
+                    horizontalLayout.setObjectName("horizontalLayout")
+                    connect_label = QtWidgets.QLabel(
+                        "Подключение успешно", window)
+                    connect_label.setFixedSize(300, 50)
+                    window.show()
+                if str(response) == "<Response [404]>":
+                    print("ne zaebis")
+
             except:
                 pass
 

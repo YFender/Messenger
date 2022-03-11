@@ -63,9 +63,12 @@ class Server_http(BaseHTTPRequestHandler):
             cursor.execute(
                 f'SELECT * FROM Users WHERE Login = "{login}" AND Password = "{password}" ')
             result = cursor.fetchall()
-            print(result)
-        self.send_response(200)
-        self.end_headers()
+            if not result:
+                self.send_response(404)
+                self.end_headers()
+            else:
+                self.send_response(200)
+                self.end_headers()
 
 
 server = HTTPServer(('localhost', 8080), Server_http)
