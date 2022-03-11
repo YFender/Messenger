@@ -6,10 +6,10 @@ from registration import *
 from add_contact import *
 import sqlite3
 import os
-import socket
+import requests
 
-if not os.path.isfile("Contacts.sqlite"):
-    conn = sqlite3.connect("Contacts.sqlite")
+if not os.path.isfile("users.sqlite"):
+    conn = sqlite3.connect("users.sqlite")
     cursor = conn.cursor()
     cursor.execute(
         "CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
@@ -79,6 +79,18 @@ class Login(QtWidgets.QMainWindow):
         self.ui = Ui_Login()
         self.ui.setupUi(self)
 
+        self.ui.pushButton_authorize.clicked.connect(self.login)
+
+    def login(self):
+        if self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "":
+            try:
+                data = {"login": self.ui.lineEdit_login.text(
+                ), "password": self.ui.lineEdit_password.text()}
+                response = requests.post(
+                    "http://localhost:8080/login", data=data)
+            except:
+                pass
+
 
 class Registration(QtWidgets.QMainWindow):
     def __init__(self):
@@ -86,11 +98,13 @@ class Registration(QtWidgets.QMainWindow):
         self.ui = Ui_Registration()
         self.ui.setupUi(self)
 
+
 class Add_contacts(QtWidgets.QMainWindow):
     def __init__(self):
         super(Add_contacts, self).__init__()
         self.ui = Ui_Add_contact()
         self.ui.setupUi(self)
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
