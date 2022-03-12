@@ -9,11 +9,11 @@ import os
 import requests
 
 # if not os.path.isfile("users.sqlite"):
-#     conn = sqlite3.connect("users.sqlite")
-#     cursor = conn.cursor()
-#     cursor.execute(
-#         "CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
-#     conn.close()
+# conn = sqlite3.connect("users.sqlite")
+# cursor = conn.cursor()
+# cursor.execute(
+#     "CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
+# conn.close()
 #
 # try:
 #     login = sqlite3.connect("./user_log.sqlite")
@@ -41,12 +41,63 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui = Ui_Client_MainWindow()
         self.ui.setupUi(self)
 
-        if not os.path.isfile("./user_log.sqlite"):
-            self.ui.tabWidget.setCurrentIndex(1)
-            self.ui.tab_chat.setEnabled(False)
+        self.ui.label_unlog.hide()
+        self.ui.pushButton_unlog.hide()
+
+        try:
+            if not os.path.isfile("./user_log.sqlite"):
+                self.ui.tabWidget.setCurrentIndex(1)
+                self.ui.tab_chat.setEnabled(False)
+            else:
+                conn = sqlite3.connect("user_log.sqlite")
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT Login, Password FROM User_log WHERE UserId = 1")
+                result = cursor.fetchall()
+                login, password = result[0][0], result[0][1]
+                result = {"login": login, "password": password}
+                print(result)
+
+                response = requests.post(
+                    "http://localhost:8080/login", data=result)
+
+                if str(response) == "<Response [200]>":
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Успех")
+                    closemes.setText("Подключение установлено")
+                    closemes.buttonClicked.connect(self.close)
+                    closemes = closemes.exec_()
+
+                    conn = sqlite3.connect("user_log.sqlite")
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
+                    cursor.execute(
+                        f'INSERT INTO UserId VALUES (Null, "{login}", "{password}")')
+                    conn.close()
+
+                    self.ui.tab_chat.setEnabled(True)
+                    self.ui.login_pushbutton.hide()
+                    self.ui.reg_pushbutton.hide()
+                    self.ui.label_unlog.show()
+                    self.ui.pushButton_unlog.show()
+
+                if str(response) == "<Response [404]>":
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Ошибка")
+                    closemes.setText("Проверьте правильность логина/пароля")
+                    closemes.buttonClicked.connect(self.close)
+                    closemes = closemes.exec_()
+        except:
+            closemes = QtWidgets.QMessageBox()
+            closemes.setWindowTitle("Ошибка")
+            closemes.setText("Ошибка подключения")
+            closemes.buttonClicked.connect(self.close)
+            closemes = closemes.exec_()
 
         self.ui.login_pushbutton.clicked.connect(self.login)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
+        # self.ui.pushButton_unlog.clicked.connect()
         self.ui.pushButton_add_contact.clicked.connect(self.add_contacts)
 
         self.ui.pushButton_delete_user.setEnabled(False)
@@ -91,17 +142,33 @@ class Login(QtWidgets.QWidget):
     def login(self):
         if self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "":
             try:
-                data = {"login": self.ui.lineEdit_login.text().lower(
-                ), "password": self.ui.lineEdit_password.text()}
+                login = self.ui.lineEdit_login.text().lower()
+                password = self.ui.lineEdit_password.text()
+                data = {"login": login, "password": password}
                 response = requests.post(
                     "http://localhost:8080/login", data=data)
                 if str(response) == "<Response [200]>":
                     closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Успешно")
+                    closemes.setWindowTitle("Успех")
                     closemes.setText("Подключение установлено")
                     closemes.buttonClicked.connect(self.close)
                     closemes = closemes.exec_()
+
+                    conn = sqlite3.connect("user_log.sqlite")
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
+                    cursor.execute(
+                        f'INSERT INTO UserId VALUES (Null, "{login}", "{password}")')
+                    conn.close()
+
                     self.parent.ui.tab_chat.setEnabled(True)
+                    self.parent.ui.login_pushbutton.hide()
+                    self.parent.ui.reg_pushbutton.hide()
+                    self.parent.ui.label_unlog.setText(
+                        f"Авторизован как {login}")
+                    self.parent.ui.label_unlog.show()
+                    self.parent.ui.pushButton_unlog.show()
 
                 if str(response) == "<Response [404]>":
                     closemes = QtWidgets.QMessageBox()
