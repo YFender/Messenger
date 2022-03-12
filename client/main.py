@@ -57,6 +57,7 @@ class MyWin(QtWidgets.QMainWindow):
                 login, password = result[0][0], result[0][1]
                 result = {"login": login, "password": password}
                 print(result)
+                conn.close()
 
                 response = requests.post(
                     "http://localhost:8080/login", data=result)
@@ -68,17 +69,20 @@ class MyWin(QtWidgets.QMainWindow):
                     closemes.buttonClicked.connect(self.close)
                     closemes = closemes.exec_()
 
-                    conn = sqlite3.connect("user_log.sqlite")
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
-                    cursor.execute(
-                        f'INSERT INTO UserId VALUES (Null, "{login}", "{password}")')
-                    conn.close()
+                    # conn = sqlite3.connect("user_log.sqlite")
+                    # cursor = conn.cursor()
+                    # cursor.execute(
+                    #     "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
+                    # cursor.execute(
+                    #     f'INSERT INTO User_Log VALUES (Null, "{login}", "{password}")')
+                    # conn.commit()
+                    # conn.close()
 
                     self.ui.tab_chat.setEnabled(True)
                     self.ui.login_pushbutton.hide()
                     self.ui.reg_pushbutton.hide()
+                    self.ui.label_unlog.setText(f"Авторизован как {login}")
+                    self.ui.tabWidget.setCurrentIndex(0)
                     self.ui.label_unlog.show()
                     self.ui.pushButton_unlog.show()
 
@@ -97,7 +101,7 @@ class MyWin(QtWidgets.QMainWindow):
 
         self.ui.login_pushbutton.clicked.connect(self.login)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
-        # self.ui.pushButton_unlog.clicked.connect()
+        self.ui.pushButton_unlog.clicked.connect(self.unlog)
         self.ui.pushButton_add_contact.clicked.connect(self.add_contacts)
 
         self.ui.pushButton_delete_user.setEnabled(False)
@@ -126,6 +130,14 @@ class MyWin(QtWidgets.QMainWindow):
     def add_contacts(self):
         self.w4 = Add_contacts()
         self.w4.show()
+
+    def unlog(self):
+        os.remove("./user_log.sqlite")
+        closemes = QtWidgets.QMessageBox()
+        closemes.setWindowTitle("Внимание")
+        closemes.setText("Приложение будет перезапущено")
+        closemes.buttonClicked.connect(self.close)
+        closemes = closemes.exec_()
 
 
 class Login(QtWidgets.QWidget):
@@ -159,7 +171,8 @@ class Login(QtWidgets.QWidget):
                     cursor.execute(
                         "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
                     cursor.execute(
-                        f'INSERT INTO UserId VALUES (Null, "{login}", "{password}")')
+                        f'INSERT INTO User_log VALUES (Null, "{login}", "{password}")')
+                    conn.commit()
                     conn.close()
 
                     self.parent.ui.tab_chat.setEnabled(True)
