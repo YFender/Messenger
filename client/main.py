@@ -8,27 +8,27 @@ import sqlite3
 import os
 import requests
 
-if not os.path.isfile("users.sqlite"):
-    conn = sqlite3.connect("users.sqlite")
-    cursor = conn.cursor()
-    cursor.execute(
-        "CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
-    conn.close()
+# if not os.path.isfile("users.sqlite"):
+#     conn = sqlite3.connect("users.sqlite")
+#     cursor = conn.cursor()
+#     cursor.execute(
+#         "CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
+#     conn.close()
+#
+# try:
+#     login = sqlite3.connect("./user_log.sqlite")
+#     login_cursor = login.cursor()
+#     login_cursor.execute("SELECT * FROM User")
+#
+# user_login = login_cursor.fetchall()[0][1]
+# user_password = login_cursor.fetchall()[0][2]
+#
+#     login.close()
+# except Exception:
+#     login.close()
 
-try:
-    login = sqlite3.connect("./user_log.sqlite")
-    login_cursor = login.cursor()
-    login_cursor.execute("SELECT * FROM User")
-
-    user_login = login_cursor.fetchall()[0][1]
-    user_password = login_cursor.fetchall()[0][2]
-
-    login.close()
-except Exception:
-    login.close()
-
-conn = sqlite3.connect('./Contacts.sqlite')
-cursor = conn.cursor()
+# conn = sqlite3.connect('./Contacts.sqlite')
+# cursor = conn.cursor()
 
 #sock = socket.socket()
 #sock.connect(("localhost", 5555))
@@ -41,6 +41,10 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui = Ui_Client_MainWindow()
         self.ui.setupUi(self)
 
+        if not os.path.isfile("./user_log.sqlite"):
+            self.ui.tabWidget.setCurrentIndex(1)
+            self.ui.tab_chat.setEnabled(False)
+
         self.ui.login_pushbutton.clicked.connect(self.login)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
         self.ui.pushButton_add_contact.clicked.connect(self.add_contacts)
@@ -48,7 +52,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_delete_user.setEnabled(False)
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
 
-        self.read_contacts()
+        # self.read_contacts()
 
     def read_contacts(self):
         cursor.execute("SELECT ContactName FROM Contacts")
@@ -73,14 +77,14 @@ class MyWin(QtWidgets.QMainWindow):
         self.w4.show()
 
 
-class Login(QtWidgets.QMainWindow):
+class Login(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Login, self).__init__()
         self.ui = Ui_Login()
         self.ui.setupUi(self)
         self.parent = parent
 
-        self.parent.ui.tabWidget.setEnabled(False)
+        # self.parent.ui.tabWidget.setEnabled(False)
 
         self.ui.pushButton_authorize.clicked.connect(self.login)
 
@@ -88,25 +92,33 @@ class Login(QtWidgets.QMainWindow):
         if self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "":
             try:
                 data = {"login": self.ui.lineEdit_login.text().lower(
-                ), "password": self.ui.lineEdit_password.text().lower()}
+                ), "password": self.ui.lineEdit_password.text()}
                 response = requests.post(
                     "http://localhost:8080/login", data=data)
+                if str(response) == "<Response [200]>":
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Успешно")
+                    closemes.setText("Подключение установлено")
+                    closemes.buttonClicked.connect(self.close)
+                    closemes = closemes.exec_()
+                    self.parent.ui.tab_chat.setEnabled(True)
+
                 if str(response) == "<Response [404]>":
-                    app = QtWidgets.QApplication(sys.argv)
-                    window = QtWidgets.QWidget(flags=QtCore.Qt.Dialog)
-                    window.setWindowTitle("Успешно")
-                    window.resize(300, 70)
-                    horizontalLayout = QtWidgets.QHBoxLayout(window)
-                    horizontalLayout.setObjectName("horizontalLayout")
-                    connect_label = QtWidgets.QLabel(
-                        "Подключение успешно", window)
-                    connect_label.setFixedSize(300, 50)
-                    window.show()
-                if str(response) == "<Response [404]>":
-                    print("ne zaebis")
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Ошибка")
+                    closemes.setText("Проверьте правильность логина/пароля")
+                    closemes.buttonClicked.connect(self.close)
+                    closemes = closemes.exec_()
 
             except:
-                pass
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Ошибка")
+                closemes.setText("Ошибка подключения")
+                closemes.buttonClicked.connect(self.close)
+                closemes = closemes.exec_()
+
+    def closeEvent(self, event):
+        self.parent.ui.tabWidget.setEnabled(True)
 
 
 class Registration(QtWidgets.QMainWindow):

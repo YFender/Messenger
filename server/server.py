@@ -55,7 +55,7 @@ class Server_http(BaseHTTPRequestHandler):
         if self.path == "/login":
 
             login = str(data['login']).replace(
-                "[", "").replace("]", "").replace("'", "")
+                "[", "").replace("]", "").replace("'", "").lower()
 
             password = str(data['password']).replace(
                 "[", "").replace("]", "").replace("'", "")
