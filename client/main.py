@@ -8,31 +8,6 @@ import sqlite3
 import os
 import requests
 
-# if not os.path.isfile("users.sqlite"):
-# conn = sqlite3.connect("users.sqlite")
-# cursor = conn.cursor()
-# cursor.execute(
-#     "CREATE TABLE Contacts(ContactID INTEGER PRIMARY KEY, ContactName VARCHAR(20) NOT NULL, ContactLogin VARCHAR(20) NOT NULL)")
-# conn.close()
-#
-# try:
-#     login = sqlite3.connect("./user_log.sqlite")
-#     login_cursor = login.cursor()
-#     login_cursor.execute("SELECT * FROM User")
-#
-# user_login = login_cursor.fetchall()[0][1]
-# user_password = login_cursor.fetchall()[0][2]
-#
-#     login.close()
-# except Exception:
-#     login.close()
-
-# conn = sqlite3.connect('./Contacts.sqlite')
-# cursor = conn.cursor()
-
-#sock = socket.socket()
-#sock.connect(("localhost", 5555))
-
 
 class MyWin(QtWidgets.QMainWindow):
 
@@ -202,26 +177,76 @@ class Registration(QtWidgets.QWidget):
         self.ui.pushButton_reg.clicked.connect(self.registration)
 
     def registration(self):
-        if self.ui.lineEdit_email.text() != "" and self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "" and self.ui.lineEdit_password_2.text() != "":
-            if self.ui.lineEdit_password.text() == self.ui.lineEdit_password_2.text():
-                if self.ui.lineEdit_email.text().find(".") != -1 or self.ui.lineEdit_email.text().find("@") != -1:
-                    pass
+        try:
+            email = self.ui.lineEdit_email.text()
+            login = self.ui.lineEdit_login.text()
+            password = self.ui.lineEdit_password.text()
+            password_2 = self.ui.lineEdit_password_2.text()
+            if email != "" and login != "" and password != "" and password_2 != "":
+                if password == password_2:
+                    if "." in email and "@" in email:
+                        if not "[" in email and not "]" in email and not "'" in email:
+                            if not "[" in login and not "]" in login and not "'" in login:
+                                if not "[" in password and not "]" in password and not "'" in password:
+                                    response = requests.post(
+                                        "http://localhost:8080/registration", data={"email": email, "login": login, "password": password})
+                                    print(response)
+                                else:
+                                    closemes = QtWidgets.QMessageBox()
+                                    closemes.setWindowTitle("Ошибка")
+                                    closemes.setText(
+                                        "Пароль содержит запрещенные символы")
+                                    closemes.buttonClicked.connect(
+                                        closemes.close)
+                                    closemes = closemes.exec_()
+                            else:
+                               closemes = QtWidgets.QMessageBox()
+                               closemes.setWindowTitle("Ошибка")
+                               closemes.setText(
+                                    "Адрес электронной почты содержит запрещенные символы")
+                               closemes.buttonClicked.connect(closemes.close)
+                               closemes = closemes.exec_()
+                        else:
+                            closemes = QtWidgets.QMessageBox()
+                            closemes.setWindowTitle("Ошибка")
+                            closemes.setText(
+                                "Логин содержит запрещенные символы")
+                            closemes.buttonClicked.connect(closemes.close)
+                            closemes = closemes.exec_()
+                    else:
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Ошибка")
+                        closemes.setText("Неверный формат электронной почты")
+                        closemes.buttonClicked.connect(closemes.close)
+                        closemes = closemes.exec_()
                 else:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
-                    closemes.setText("Неверный формат электронной почты")
+                    closemes.setText("Пароли не совпадают")
                     closemes.buttonClicked.connect(closemes.close)
                     closemes = closemes.exec_()
             else:
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
-                closemes.setText("Пароли не совпадают")
+                closemes.setText("Введите данные во все поля")
                 closemes.buttonClicked.connect(closemes.close)
                 closemes = closemes.exec_()
-        else:
+
+            if str(response) == "<Response [200]>":
+                print(response)
+
+            if str(response) == "<Response [403]>":
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Ошибка")
+                closemes.setText(
+                    "Пользователь с такими данными уже существует")
+                closemes.buttonClicked.connect(closemes.close)
+                closemes = closemes.exec_()
+
+        except:
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
-            closemes.setText("Введите данные во все поля")
+            closemes.setText("Ошибка подключения")
             closemes.buttonClicked.connect(closemes.close)
             closemes = closemes.exec_()
 

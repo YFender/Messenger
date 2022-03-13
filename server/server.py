@@ -1,32 +1,6 @@
-# import socket
-# from pyngrok import ngrok
 from http.server import BaseHTTPRequestHandler, HTTPServer
-# from io import BytesIO
-# import cgi
 import urllib
 import sqlite3
-#
-# class Server:
-#     def __init__(self):
-#         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-#
-#         self.sock.bind(('localhost', 5000))
-#         print(self.sock)
-#
-#         self.sock.listen(3)
-#
-#     def mainloop(self):
-#         while True:
-#             self.conn, self.address = self.sock.accept()
-#             print("connected:", self.address)
-#             self.data = self.conn.recv(1024)
-#             print(self.data)
-#             self.conn.send(self.data.upper())
-#             self.conn.close()
-
-# if __name__ == "__main__":
-#         Server().mainloop()
 
 conn = sqlite3.connect("users.sqlite")
 cursor = conn.cursor()
@@ -70,8 +44,29 @@ class Server_http(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.end_headers()
 
-        if self.path == "/register":
-            pass
+        if self.path == "/registration":
+            email = str(data['email']).replace(
+                "[", "").replace("]", "").replace("'", "").lower()
+
+            login = str(data['login']).replace(
+                "[", "").replace("]", "").replace("'", "").lower()
+
+            password = str(data['password']).replace(
+                "[", "").replace("]", "").replace("'", "").lower()
+
+            print(email, login, password)
+            cursor.execute(
+                f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"')
+            result = cursor.fetchall()
+
+            if not result:
+                self.send_response(200)
+                self.end_headers()
+            else:
+                self.send_response(403)
+                self.end_headers()
+
+            print("\n")
 
 
 server = HTTPServer(('localhost', 8080), Server_http)
