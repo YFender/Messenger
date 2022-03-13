@@ -7,6 +7,7 @@ from add_contact import *
 import sqlite3
 import os
 import requests
+from re import findall
 
 
 class MyWin(QtWidgets.QMainWindow):
@@ -69,7 +70,6 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.login_pushbutton.clicked.connect(self.login)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
         self.ui.pushButton_unlog.clicked.connect(self.unlog)
-        self.ui.pushButton_add_contact.clicked.connect(self.add_contacts)
 
         self.ui.pushButton_delete_user.setEnabled(False)
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
@@ -94,10 +94,6 @@ class MyWin(QtWidgets.QMainWindow):
     def select_contact(self):
         pass
 
-    def add_contacts(self):
-        self.w4 = Add_contacts()
-        self.w4.show()
-
     def unlog(self):
         os.remove("./user_log.sqlite")
         closemes = QtWidgets.QMessageBox()
@@ -121,40 +117,56 @@ class Login(QtWidgets.QWidget):
     def login(self):
         if self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "":
             try:
+                blacklist = "' " + '"‘’“”‚„'
                 login = self.ui.lineEdit_login.text().lower()
-                password = self.ui.lineEdit_password.text()
-                data = {"login": login, "password": password}
-                response = requests.post(
-                    "http://localhost:8080/login", data=data)
-                if str(response) == "<Response [200]>":
-                    closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Успех")
-                    closemes.setText("Подключение установлено")
-                    closemes.buttonClicked.connect(self.close)
-                    closemes = closemes.exec_()
+                if not findall("|".join(list(blacklist)), login) and "[" not in login and "]" not in login:
+                    password = self.ui.lineEdit_password.text()
+                    if not findall("|".join(list(blacklist)), password) and "[" not in password and "]" not in password:
+                        data = {"login": login, "password": password}
+                        response = requests.post(
+                            "http://localhost:8080/login", data=data)
+                        if str(response) == "<Response [200]>":
+                            closemes = QtWidgets.QMessageBox()
+                            closemes.setWindowTitle("Успех")
+                            closemes.setText("Подключение установлено")
+                            closemes.buttonClicked.connect(self.close)
+                            closemes = closemes.exec_()
 
-                    conn = sqlite3.connect("user_log.sqlite")
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
-                    cursor.execute(
-                        f'INSERT INTO User_log VALUES (Null, "{login}", "{password}")')
-                    conn.commit()
-                    conn.close()
+                            conn = sqlite3.connect("user_log.sqlite")
+                            cursor = conn.cursor()
+                            cursor.execute(
+                                "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
+                            cursor.execute(
+                                f'INSERT INTO User_log VALUES (Null, "{login}", "{password}")')
+                            conn.commit()
+                            conn.close()
 
-                    self.parent.ui.tab_chat.setEnabled(True)
-                    self.parent.ui.login_pushbutton.hide()
-                    self.parent.ui.reg_pushbutton.hide()
-                    self.parent.ui.label_unlog.setText(
-                        f"Авторизован как {login}")
-                    self.parent.ui.label_unlog.show()
-                    self.parent.ui.pushButton_unlog.show()
+                            self.parent.ui.tab_chat.setEnabled(True)
+                            self.parent.ui.login_pushbutton.hide()
+                            self.parent.ui.reg_pushbutton.hide()
+                            self.parent.ui.label_unlog.setText(
+                                f"Авторизован как {login}")
+                            self.parent.ui.label_unlog.show()
+                            self.parent.ui.pushButton_unlog.show()
 
-                if str(response) == "<Response [404]>":
+                        if str(response) == "<Response [404]>":
+                            closemes = QtWidgets.QMessageBox()
+                            closemes.setWindowTitle("Ошибка")
+                            closemes.setText(
+                                "Проверьте правильность логина/пароля")
+                            closemes.buttonClicked.connect(closemes.close)
+                            closemes = closemes.exec_()
+                    else:
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Ошибка")
+                        closemes.setText("Пароль содержит запрещенные символы")
+                        closemes.buttonClicked.connect(closemes.close)
+                        closemes = closemes.exec_()
+                else:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
-                    closemes.setText("Проверьте правильность логина/пароля")
-                    closemes.buttonClicked.connect(self.close)
+                    closemes.setText("Логин содержит запрещенные символы")
+                    closemes.buttonClicked.connect(closemes.close)
                     closemes = closemes.exec_()
 
             except:
@@ -163,6 +175,12 @@ class Login(QtWidgets.QWidget):
                 closemes.setText("Ошибка подключения")
                 closemes.buttonClicked.connect(self.close)
                 closemes = closemes.exec_()
+        else:
+            closemes = QtWidgets.QMessageBox()
+            closemes.setWindowTitle("Ошибка")
+            closemes.setText("Введите логин и пароль")
+            closemes.buttonClicked.connect(closemes.close)
+            closemes = closemes.exec_()
 
     def closeEvent(self, event):
         self.parent.ui.tabWidget.setEnabled(True)
@@ -178,6 +196,7 @@ class Registration(QtWidgets.QWidget):
 
     def registration(self):
         try:
+            blacklist = "' " + '"‘’“”‚„'
             email = self.ui.lineEdit_email.text()
             login = self.ui.lineEdit_login.text()
             password = self.ui.lineEdit_password.text()
@@ -185,9 +204,9 @@ class Registration(QtWidgets.QWidget):
             if email != "" and login != "" and password != "" and password_2 != "":
                 if password == password_2:
                     if "." in email and "@" in email:
-                        if not "[" in email and not "]" in email and not "'" in email:
-                            if not "[" in login and not "]" in login and not "'" in login:
-                                if not "[" in password and not "]" in password and not "'" in password:
+                        if not findall("|".join(list(blacklist)), email) and "[" not in email and "]" not in email:
+                            if not findall("|".join(list(blacklist)), login) and "[" not in login and "]" not in login:
+                                if not findall("|".join(list(blacklist)), password) and "[" not in password and "]" not in password:
                                     response = requests.post(
                                         "http://localhost:8080/registration", data={"email": email, "login": login, "password": password})
                                     print(response)
@@ -220,14 +239,14 @@ class Registration(QtWidgets.QWidget):
                                closemes = QtWidgets.QMessageBox()
                                closemes.setWindowTitle("Ошибка")
                                closemes.setText(
-                                    "Адрес электронной почты содержит запрещенные символы")
+                                    "Логин содержит запрещенные символы")
                                closemes.buttonClicked.connect(closemes.close)
                                closemes = closemes.exec_()
                         else:
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Ошибка")
                             closemes.setText(
-                                "Логин содержит запрещенные символы")
+                                "Адрес электронной почты содержит запрещенные символы")
                             closemes.buttonClicked.connect(closemes.close)
                             closemes = closemes.exec_()
                     else:
