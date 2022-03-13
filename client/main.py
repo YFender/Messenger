@@ -69,15 +69,6 @@ class MyWin(QtWidgets.QMainWindow):
                     closemes.buttonClicked.connect(self.close)
                     closemes = closemes.exec_()
 
-                    # conn = sqlite3.connect("user_log.sqlite")
-                    # cursor = conn.cursor()
-                    # cursor.execute(
-                    #     "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
-                    # cursor.execute(
-                    #     f'INSERT INTO User_Log VALUES (Null, "{login}", "{password}")')
-                    # conn.commit()
-                    # conn.close()
-
                     self.ui.tab_chat.setEnabled(True)
                     self.ui.login_pushbutton.hide()
                     self.ui.reg_pushbutton.hide()
@@ -92,6 +83,7 @@ class MyWin(QtWidgets.QMainWindow):
                     closemes.setText("Проверьте правильность логина/пароля")
                     closemes.buttonClicked.connect(self.close)
                     closemes = closemes.exec_()
+                    os.remove("./user_log.sqlite")
         except:
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
@@ -201,18 +193,37 @@ class Login(QtWidgets.QWidget):
         self.parent.ui.tabWidget.setEnabled(True)
 
 
-class Registration(QtWidgets.QMainWindow):
+class Registration(QtWidgets.QWidget):
     def __init__(self):
         super(Registration, self).__init__()
         self.ui = Ui_Registration()
         self.ui.setupUi(self)
 
+        self.ui.pushButton_reg.clicked.connect(self.registration)
 
-class Add_contacts(QtWidgets.QMainWindow):
-    def __init__(self):
-        super(Add_contacts, self).__init__()
-        self.ui = Ui_Add_contact()
-        self.ui.setupUi(self)
+    def registration(self):
+        if self.ui.lineEdit_email.text() != "" and self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "" and self.ui.lineEdit_password_2.text() != "":
+            if self.ui.lineEdit_password.text() == self.ui.lineEdit_password_2.text():
+                if self.ui.lineEdit_email.text().find(".") != -1 or self.ui.lineEdit_email.text().find("@") != -1:
+                    pass
+                else:
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Ошибка")
+                    closemes.setText("Неверный формат электронной почты")
+                    closemes.buttonClicked.connect(closemes.close)
+                    closemes = closemes.exec_()
+            else:
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Ошибка")
+                closemes.setText("Пароли не совпадают")
+                closemes.buttonClicked.connect(closemes.close)
+                closemes = closemes.exec_()
+        else:
+            closemes = QtWidgets.QMessageBox()
+            closemes.setWindowTitle("Ошибка")
+            closemes.setText("Введите данные во все поля")
+            closemes.buttonClicked.connect(closemes.close)
+            closemes = closemes.exec_()
 
 
 if __name__ == "__main__":

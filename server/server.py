@@ -70,6 +70,9 @@ class Server_http(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.end_headers()
 
+        if self.path == "/register":
+            pass
+
 
 server = HTTPServer(('localhost', 8080), Server_http)
 print('Started httpserver on port ', 8080)
