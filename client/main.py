@@ -191,6 +191,23 @@ class Registration(QtWidgets.QWidget):
                                     response = requests.post(
                                         "http://localhost:8080/registration", data={"email": email, "login": login, "password": password})
                                     print(response)
+                                    if str(response) == "<Response [200]>":
+                                        closemes = QtWidgets.QMessageBox()
+                                        closemes.setWindowTitle("Успех")
+                                        closemes.setText(
+                                            "Регистрация прошла успешно")
+                                        closemes.buttonClicked.connect(
+                                            self.close)
+                                        closemes = closemes.exec_()
+
+                                    if str(response) == "<Response [403]>":
+                                        closemes = QtWidgets.QMessageBox()
+                                        closemes.setWindowTitle("Ошибка")
+                                        closemes.setText(
+                                            "Пользователь с такими данными уже существует")
+                                        closemes.buttonClicked.connect(
+                                            closemes.close)
+                                        closemes = closemes.exec_()
                                 else:
                                     closemes = QtWidgets.QMessageBox()
                                     closemes.setWindowTitle("Ошибка")
@@ -229,17 +246,6 @@ class Registration(QtWidgets.QWidget):
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText("Введите данные во все поля")
-                closemes.buttonClicked.connect(closemes.close)
-                closemes = closemes.exec_()
-
-            if str(response) == "<Response [200]>":
-                print(response)
-
-            if str(response) == "<Response [403]>":
-                closemes = QtWidgets.QMessageBox()
-                closemes.setWindowTitle("Ошибка")
-                closemes.setText(
-                    "Пользователь с такими данными уже существует")
                 closemes.buttonClicked.connect(closemes.close)
                 closemes = closemes.exec_()
 

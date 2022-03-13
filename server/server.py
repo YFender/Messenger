@@ -60,6 +60,9 @@ class Server_http(BaseHTTPRequestHandler):
             result = cursor.fetchall()
 
             if not result:
+                cursor.execute(
+                    f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")')
+                conn.commit()
                 self.send_response(200)
                 self.end_headers()
             else:
