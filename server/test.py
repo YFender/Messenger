@@ -3,8 +3,8 @@ import requests
 
 
 def login():
-    query = {"login": 1, "password": 9, "asds": "frar"}
-    response = requests.post("http://localhost:8080/login", data=query)
+    query = {"login": '""[11[]111', "password": 9, "asds": "frar"}
+    response = requests.get("http://localhost:8080/", data=query)
     print(response.text)
 
 

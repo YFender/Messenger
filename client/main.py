@@ -7,7 +7,7 @@ from add_contact import *
 import sqlite3
 import os
 import requests
-from re import findall
+from re import findall, match
 
 
 class MyWin(QtWidgets.QMainWindow):
@@ -119,9 +119,9 @@ class Login(QtWidgets.QWidget):
             try:
                 blacklist = "' " + '"‘’“”‚„'
                 login = self.ui.lineEdit_login.text().lower()
-                if not findall("|".join(list(blacklist)), login) and "[" not in login and "]" not in login:
+                if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', login):
                     password = self.ui.lineEdit_password.text()
-                    if not findall("|".join(list(blacklist)), password) and "[" not in password and "]" not in password:
+                    if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', password):
                         data = {"login": login, "password": password}
                         response = requests.post(
                             "http://localhost:8080/login", data=data)
@@ -196,63 +196,54 @@ class Registration(QtWidgets.QWidget):
 
     def registration(self):
         try:
-            blacklist = "' " + '"‘’“”‚„'
             email = self.ui.lineEdit_email.text()
             login = self.ui.lineEdit_login.text()
             password = self.ui.lineEdit_password.text()
             password_2 = self.ui.lineEdit_password_2.text()
             if email != "" and login != "" and password != "" and password_2 != "":
                 if password == password_2:
-                    if "." in email and "@" in email:
-                        if not findall("|".join(list(blacklist)), email) and "[" not in email and "]" not in email:
-                            if not findall("|".join(list(blacklist)), login) and "[" not in login and "]" not in login:
-                                if not findall("|".join(list(blacklist)), password) and "[" not in password and "]" not in password:
-                                    response = requests.post(
-                                        "http://localhost:8080/registration", data={"email": email, "login": login, "password": password})
-                                    print(response)
-                                    if str(response) == "<Response [200]>":
-                                        closemes = QtWidgets.QMessageBox()
-                                        closemes.setWindowTitle("Успех")
-                                        closemes.setText(
-                                            "Регистрация прошла успешно")
-                                        closemes.buttonClicked.connect(
-                                            self.close)
-                                        closemes = closemes.exec_()
+                    if match('^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$', email) != None:
+                        if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', login):
+                            if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', password):
+                                response = requests.post("http://localhost:8080/registration", data={
+                                                         "email": email, "login": login, "password": password})
+                                print(response)
+                                if str(response) == "<Response [200]>":
+                                    closemes = QtWidgets.QMessageBox()
+                                    closemes.setWindowTitle("Успех")
+                                    closemes.setText(
+                                        "Регистрация прошла успешно")
+                                    closemes.buttonClicked.connect(self.close)
+                                    closemes = closemes.exec_()
 
-                                    if str(response) == "<Response [403]>":
-                                        closemes = QtWidgets.QMessageBox()
-                                        closemes.setWindowTitle("Ошибка")
-                                        closemes.setText(
-                                            "Пользователь с такими данными уже существует")
-                                        closemes.buttonClicked.connect(
-                                            closemes.close)
-                                        closemes = closemes.exec_()
-                                else:
+                                if str(response) == "<Response [403]>":
                                     closemes = QtWidgets.QMessageBox()
                                     closemes.setWindowTitle("Ошибка")
                                     closemes.setText(
-                                        "Пароль содержит запрещенные символы")
+                                            "Пользователь с такими данными уже существует")
                                     closemes.buttonClicked.connect(
-                                        closemes.close)
+                                            closemes.close)
                                     closemes = closemes.exec_()
                             else:
-                               closemes = QtWidgets.QMessageBox()
-                               closemes.setWindowTitle("Ошибка")
-                               closemes.setText(
-                                    "Логин содержит запрещенные символы")
-                               closemes.buttonClicked.connect(closemes.close)
-                               closemes = closemes.exec_()
+                                closemes = QtWidgets.QMessageBox()
+                                closemes.setWindowTitle("Ошибка")
+                                closemes.setText(
+                                        "Пароль содержит запрещенные символы")
+                                closemes.buttonClicked.connect(
+                                        closemes.close)
+                                closemes = closemes.exec_()
                         else:
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Ошибка")
                             closemes.setText(
-                                "Адрес электронной почты содержит запрещенные символы")
+                                    "Логин содержит запрещенные символы")
                             closemes.buttonClicked.connect(closemes.close)
                             closemes = closemes.exec_()
                     else:
                         closemes = QtWidgets.QMessageBox()
                         closemes.setWindowTitle("Ошибка")
-                        closemes.setText("Неверный формат электронной почты")
+                        closemes.setText(
+                                "Адрес электронной почты имеет формат или/и содержит запрещенные символы")
                         closemes.buttonClicked.connect(closemes.close)
                         closemes = closemes.exec_()
                 else:
