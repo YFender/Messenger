@@ -1,13 +1,15 @@
-import sys
-from PyQt5 import QtCore, QtGui, QtWidgets
-from client import *
-from login import *
-from registration import *
-from add_contact import *
-import sqlite3
-import os
-import requests
+from sys import argv, exit
+from PyQt5 import QtWidgets
+from client import Ui_Client_MainWindow
+from login import Ui_Login
+from registration import Ui_Registration
+from add_contact import Ui_Add_contact
+from sqlite3 import connect
+from os import path, remove
+from requests import post
 from re import findall, match
+
+responce_address = "http://localhost:8080"
 
 
 class MyWin(QtWidgets.QMainWindow):
@@ -21,24 +23,24 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_unlog.hide()
 
         try:
-            if not os.path.isfile("./user_log.sqlite"):
+            if not path.isfile("./user_log.sqlite"):
                 self.ui.tabWidget.setCurrentIndex(1)
                 self.ui.tab_chat.setEnabled(False)
             else:
-                conn = sqlite3.connect("user_log.sqlite")
+                conn = connect("user_log.sqlite")
                 cursor = conn.cursor()
                 cursor.execute(
                     "SELECT Login, Password FROM User_log WHERE UserId = 1")
-                result = cursor.fetchall()
+                result = cursor.fetchone()
                 login, password = result[0][0], result[0][1]
                 result = {"login": login, "password": password}
                 print(result)
                 conn.close()
 
-                response = requests.post(
-                    "http://localhost:8080/login", data=result)
+                response_login = post(
+                    f"{responce_address}/login", data=result)
 
-                if str(response) == "<Response [200]>":
+                if str(response_login) == "<Response [200]>":
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Успех")
                     closemes.setText("Подключение установлено")
@@ -53,13 +55,17 @@ class MyWin(QtWidgets.QMainWindow):
                     self.ui.label_unlog.show()
                     self.ui.pushButton_unlog.show()
 
-                if str(response) == "<Response [404]>":
+                    response_check_contacts = post(
+                        f"{responce_address}/check_contacts")
+
+                elif str(response_login) == "<Response [404]>":
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
                     closemes.setText("Проверьте правильность логина/пароля")
                     closemes.buttonClicked.connect(self.close)
                     closemes = closemes.exec_()
-                    os.remove("./user_log.sqlite")
+                    remove("./user_log.sqlite")
+
         except:
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
@@ -76,12 +82,12 @@ class MyWin(QtWidgets.QMainWindow):
 
         # self.read_contacts()
 
-    def read_contacts(self):
-        cursor.execute("SELECT ContactName FROM Contacts")
-        results = cursor.fetchall()
-        for i in results:
-            print(i[0])
-            self.ui.listWidget_contacts.addItem(i[0])
+    # def read_contacts(self):
+    #     cursor.execute("SELECT ContactName FROM Contacts")
+    #     results = cursor.fetchall()
+    #     for i in results:
+    #         print(i[0])
+    #         self.ui.listWidget_contacts.addItem(i[0])
 
     def login(self):
         self.w2 = Login(self)
@@ -95,7 +101,7 @@ class MyWin(QtWidgets.QMainWindow):
         pass
 
     def unlog(self):
-        os.remove("./user_log.sqlite")
+        remove("./user_log.sqlite")
         closemes = QtWidgets.QMessageBox()
         closemes.setWindowTitle("Внимание")
         closemes.setText("Приложение будет перезапущено")
@@ -123,8 +129,8 @@ class Login(QtWidgets.QWidget):
                     password = self.ui.lineEdit_password.text()
                     if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', password):
                         data = {"login": login, "password": password}
-                        response = requests.post(
-                            "http://localhost:8080/login", data=data)
+                        response = post(
+                            f"{responce_address}/login", data=data)
                         if str(response) == "<Response [200]>":
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Успех")
@@ -132,7 +138,7 @@ class Login(QtWidgets.QWidget):
                             closemes.buttonClicked.connect(self.close)
                             closemes = closemes.exec_()
 
-                            conn = sqlite3.connect("user_log.sqlite")
+                            conn = connect("user_log.sqlite")
                             cursor = conn.cursor()
                             cursor.execute(
                                 "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
@@ -205,7 +211,7 @@ class Registration(QtWidgets.QWidget):
                     if match('^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$', email) != None:
                         if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', login):
                             if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', password):
-                                response = requests.post("http://localhost:8080/registration", data={
+                                response = post(f"{responce_address}/registration", data={
                                                          "email": email, "login": login, "password": password})
                                 print(response)
                                 if str(response) == "<Response [200]>":
@@ -268,7 +274,7 @@ class Registration(QtWidgets.QWidget):
 
 
 if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(argv)
     myapp = MyWin()
     myapp.show()
-    sys.exit(app.exec_())
+    exit(app.exec_())

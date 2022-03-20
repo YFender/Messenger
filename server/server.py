@@ -1,12 +1,11 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import urllib
-import sqlite3
-# import re
+# from http.server import BaseHTTPRequestHandler, HTTPServer
+# from urllib import parse
+from aiosqlite import connect
 from smtplib import SMTP_SSL
+# import asyncio
+from aiohttp import web
+# from multidict import MultiDict, CIMultiDictProxy
 from random import randint
-
-conn = sqlite3.connect("users.sqlite")
-cursor = conn.cursor()
 
 # пароль для ящика XQb56ic4VCy5ccwuvviH
 
@@ -14,91 +13,91 @@ email_server = SMTP_SSL("smtp.mail.ru", 465)
 email_server.login("yfen_python@mail.ru", "XQb56ic4VCy5ccwuvviH")
 
 
-class Server_http(BaseHTTPRequestHandler):
+class Server_http(web.View):
 
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
+    async def get(self):
+        return web.Response(status=200)
 
-    def do_POST(self):
+    async def post(self):
         try:
-            # ctype, pdict = CGIHTTPRequestHandler.
-            print(self.headers)
-            # ctype, pdict = cgi.parse_header(self.headers['content-type'])
-            content_length = int(self.headers['Content-Length'])
-            body = self.rfile.read(content_length)
-            print(body)
-            data = urllib.parse.parse_qs(body.decode())
+            path = str(self.request.match_info.get('path', None))
+            print(path)
+            data = await self.request.post()
+            # print(data)
+            # print(data['login'])
 
-            if self.path == "/login":
+            if path == "login":
+                return await self.login_def(str(data['login']), str(data['password']))
 
-                login = str(data['login']).strip("[").rstrip("]")
-                if login[0] == '"':
-                    login = login.strip('"')
-                elif login[0] == "'":
-                    login = login.strip("'")
+            elif path == "registration":
+                return await self.registration_def(data["email"], data["login"], data["password"])
 
-                password = str(data['password']).strip("[").rstrip("]")
-                if password[0] == '"':
-                    password = password.strip('"')
-                elif password[0] == "'":
-                    password = password.strip("'")
+            elif path == "message":
+                return await self.message_def(data)
 
-                cursor.execute(
-                    f'SELECT * FROM Users WHERE Login = "{login}" AND Password = "{password}" ')
-                result = cursor.fetchall()
-                if not result:
-                    self.send_response(404)
-                    self.end_headers()
-                else:
-                    self.send_response(200)
-                    self.end_headers()
+            else:
+                return web.Response(status=404)
 
-            if self.path == "/registration":
+        except Exception as ex:
+            return web.Response(status=500)
+            print(ex)
 
-                email = str(data['email']).strip("[").rstrip("]")
-                if email[0] == '"':
-                    email = email.strip('"')
-                elif email[0] == "'":
-                    email = email.strip("'")
+    async def login_def(self, login, password):
+        try:
 
-                login = str(data['login']).strip("[").rstrip("]")
-                if login[0] == '"':
-                    login = login.strip('"')
-                elif login[0] == "'":
-                    login = login.strip("'")
+            request = f'SELECT * FROM Users WHERE Login = "{login}" AND Password = "{password}" '
 
-                password = str(data['password']).strip("[").rstrip("]")
-                if password[0] == '"':
-                    password = password.strip('"')
-                elif password[0] == "'":
-                    password = password.strip("'")
+            if not await self.sql_request_users(request, "login"):
+                return web.Response(status=404)
+                print("not")
+            else:
+                print("not not")
+                return web.Response(status=200)
 
-                checknum = randint(10000, 99999)
+        except Exception as ex:
+            return web.Response(status=500)
+            print(ex)
 
-                print(email, login, password)
-                cursor.execute(
-                    f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"')
-                result = cursor.fetchall()
+    async def registration_def(self, email, login, password):
+        try:
+            request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
+            # cursor.execute(
+            #     f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"')
+            # result = cursor.fetchall()
 
-                if not result:
-                    cursor.execute(
-                        f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")')
-                    conn.commit()
-                    self.send_response(200)
-                    self.end_headers()
-                else:
-                    self.send_response(403)
-                    self.end_headers()
+            if not await self.sql_request_users(request, "registration"):
+                check_num = randint(100000, 999999)
+                request = f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")'
+                await self.sql_request_users(request)
+                return web.Response(status=200)
+            else:
+                return web.Response(status=403)
 
-                print("\n")
-        except:
-            self.send_response(500)
-            self.end_headers()
+        except Exception:
+            return web.Responce(status=500)
+
+    async def message_def(self, data):
+        return web.Response(status=200)
+
+    async def sql_request_users(self, request, request_type):
+        conn = await connect("./users.sqlite")
+        if request_type == "login":
+            cursor = await conn.execute(request)
+            result = await cursor.fetchone()
+            await cursor.close()
+            await conn.close()
+            return result
+        elif request_type == "registration":
+            cursor = await conn.execute(request)
+            await conn.commit()
+        await cursor.close()
+        await conn.close()
+        # print("db zakrita")
 
 
-server = HTTPServer(('localhost', 8080), Server_http)
-print('Started httpserver on port ', 8080)
+if __name__ == "__main__":
+    app = web.Application()
+    app.router.add_view('/{path}', Server_http)
+    app.router.add_view('', Server_http)
 
-# Wait forever for incoming http requests
-server.serve_forever()
+    web.run_app(app, port=8080)

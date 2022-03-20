@@ -1,13 +1,17 @@
-import requests
-# import json
+import aiosqlite
+import asyncio
 
 
-def login():
-    query = {"login": '""[11[]111', "password": 9, "asds": "frar"}
-    response = requests.get("http://localhost:8080/", data=query)
-    print(response.text)
+async def asd():
+    db = await aiosqlite.connect("./users.sqlite")
+    cursor = await db.execute('SELECT * FROM Users WHERE Email = "yavmayn@bk.com"')
+    row = await cursor.fetchone()
+    print(row)
+    rows = await cursor.fetchall()
+    print(rows)
+    await cursor.close()
+    await db.close()
 
-
-login()
-# print(post())
-# print(get())
+loop = asyncio.get_event_loop()
+a = loop.create_task(asd())
+loop.run_until_complete(asyncio.wait([a]))
