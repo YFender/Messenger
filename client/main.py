@@ -9,7 +9,7 @@ from os import path, remove
 from requests import post
 from re import findall, match
 
-responce_address = "http://localhost:8080"
+response_address = "http://localhost:8080"
 
 
 class MyWin(QtWidgets.QMainWindow):
@@ -38,7 +38,7 @@ class MyWin(QtWidgets.QMainWindow):
                 conn.close()
 
                 response_login = post(
-                    f"{responce_address}/login", data=result)
+                    f"{response_address}/login", data=result)
 
                 if str(response_login) == "<Response [200]>":
                     closemes = QtWidgets.QMessageBox()
@@ -56,7 +56,7 @@ class MyWin(QtWidgets.QMainWindow):
                     self.ui.pushButton_unlog.show()
 
                     response_check_contacts = post(
-                        f"{responce_address}/check_contacts")
+                        f"{response_address}/check_contacts")
 
                 elif str(response_login) == "<Response [404]>":
                     closemes = QtWidgets.QMessageBox()
@@ -130,7 +130,7 @@ class Login(QtWidgets.QWidget):
                     if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', password):
                         data = {"login": login, "password": password}
                         response = post(
-                            f"{responce_address}/login", data=data)
+                            f"{response_address}/login", data=data)
                         if str(response) == "<Response [200]>":
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Успех")
@@ -211,14 +211,15 @@ class Registration(QtWidgets.QWidget):
                     if match('^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$', email) != None:
                         if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', login):
                             if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', password):
-                                response = post(f"{responce_address}/registration", data={
+                                response = post(f"{response_address}/registration", data={
                                                          "email": email, "login": login, "password": password})
                                 print(response)
                                 if str(response) == "<Response [200]>":
                                     closemes = QtWidgets.QMessageBox()
+
                                     closemes.setWindowTitle("Успех")
                                     closemes.setText(
-                                        "Регистрация прошла успешно")
+                                        "На ваш Email пришел код")
                                     closemes.buttonClicked.connect(self.close)
                                     closemes = closemes.exec_()
 
@@ -265,7 +266,8 @@ class Registration(QtWidgets.QWidget):
                 closemes.buttonClicked.connect(closemes.close)
                 closemes = closemes.exec_()
 
-        except:
+        except Exception as ex:
+            print(ex)
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
             closemes.setText("Ошибка подключения")

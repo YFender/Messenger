@@ -37,14 +37,14 @@ class Server_http(web.View):
                 return await self.message_def(data)
 
             elif path == "email_verification":
-                return await self.verifification(data["email"], data["login"], data["password"], data["check_str"])
+                return await self.verification(data["email"], data["login"], data["password"], data["check_str"])
 
             else:
                 return web.Response(status=404)
 
         except Exception as ex:
             return web.Response(status=500)
-            print(ex)
+            # print(ex)
 
     async def login_def(self, login, password):
         try:
@@ -66,28 +66,33 @@ class Server_http(web.View):
         try:
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
 
-            if not await self.sql_request_users(request, "registration/check"):
-                check_str = [choice(ascii_uppercase + digits)for i in range(6)]
-
-                request = f'INSERT INTO Verifification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
+            if not await self.sql_request_users(request, "registration_check"):
+                check_str = ''.join(
+                    [choice(ascii_uppercase + digits)for i in range(6)])
+                request = f'INSERT INTO Verification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
                 await self.sql_request_users(request, "email_verification_plan")
                 email_server.sendmail(
-                    "yfen_python@mail.ru", email, f'Subject: Подтвердите регистрацию на YFenMessenger\nВаш код подтверждения: {check_str}')
+                    "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
                 return web.Response(status=200)
             else:
                 return web.Response(status=403)
 
-        except Exception:
-            return web.Responce(status=500)
+        except Exception as ex:
+            print(ex)
+            return web.Response(status=500)
 
-    async def verifification(self, email, login, password, check_str):
-        request = f'SELECT * FROM Verifification WHERE Email = {email} AND Login = {login} AND Password = {password} AND CheckStr = {check_str}'
-        if await self.sql_request_users(request, "verifification_check") == False:
-            return web.Response(status=403)
-        else:
-            request = f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")'
-            await self.sql_request_users(request, "registration_final")
-            return web.Response(status=200)
+    async def verification(self, email, login, password, check_str):
+        try:
+            request = f'SELECT * FROM Verification WHERE Email = {email} AND Login = {login} AND Password = {password} AND CheckStr = {check_str}'
+            if await self.sql_request_users(request, "verification_check") == False:
+                return web.Response(status=403)
+            else:
+                request = f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")'
+                await self.sql_request_users(request, "registration_final")
+                return web.Response(status=200)
+        except Exception as ex:
+            print(ex)
+            return web.Response(status=500)
 
     async def message_def(self, data):
         return web.Response(status=200)
@@ -111,7 +116,7 @@ class Server_http(web.View):
                await conn.close()
                return result
 
-           elif request_type == "verifification_check":
+           elif request_type == "verification_check":
                conn = await connect("./email_verification.sqlite")
                cursor = await conn.execute(request)
                result = await cursor.fetchone()
@@ -122,7 +127,7 @@ class Server_http(web.View):
                else:
                    email = result["email"]
                    login = result["login"]
-                   cursor = await conn.execute(f'DELETE FROM Verifification WHERE Email = "{email}" AND Login = "{login}"')
+                   cursor = await conn.execute(f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"')
                    await conn.commit()
                    await cursor.close()
                    await conn.close()
@@ -132,17 +137,20 @@ class Server_http(web.View):
                conn = await connect("./users.sqlite")
                cursor = await conn.execute(request)
                await conn.commit()
+               await cursor.close()
+               await conn.close()
 
            elif request_type == "email_verification_plan":
                conn = await connect("./email_verification.sqlite")
                cursor = await conn.execute(request)
                await conn.commit()
+               await cursor.close()
+               await conn.close()
 
-           await cursor.close()
-           await conn.close()
            # print("db zakrita")
-        except:
-            return web.Responce(status=500)
+        except Exception as ex:
+            print(ex)
+            return web.Response(status=500)
 
 
 if __name__ == "__main__":
