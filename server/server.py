@@ -87,6 +87,7 @@ class Server_http(web.View):
         else:
             request = f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")'
             await self.sql_request_users(request, "registration_final")
+            return web.Response(status=200)
 
     async def message_def(self, data):
         return web.Response(status=200)
