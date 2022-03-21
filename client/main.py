@@ -7,6 +7,7 @@ from add_contact import Ui_Add_contact
 from sqlite3 import connect
 from os import path, remove
 from requests import post
+from email_dialog import Ui_Dialog
 from re import findall, match
 
 response_address = "http://localhost:8080"
@@ -202,8 +203,8 @@ class Registration(QtWidgets.QWidget):
 
     def registration(self):
         try:
-            email = self.ui.lineEdit_email.text()
-            login = self.ui.lineEdit_login.text()
+            email = self.ui.lineEdit_email.text().lower()
+            login = self.ui.lineEdit_login.text().lower()
             password = self.ui.lineEdit_password.text()
             password_2 = self.ui.lineEdit_password_2.text()
             if email != "" and login != "" and password != "" and password_2 != "":
@@ -215,15 +216,17 @@ class Registration(QtWidgets.QWidget):
                                                          "email": email, "login": login, "password": password})
                                 print(response)
                                 if str(response) == "<Response [200]>":
-                                    closemes = QtWidgets.QMessageBox()
+                                    self.dialog = Email_dialog(self)
+                                    self.dialog.show()
+                                    # closemes = QtWidgets.QMessageBox()
+                                    #
+                                    # closemes.setWindowTitle("Успех")
+                                    # closemes.setText(
+                                    #     "На ваш Email пришел код")
+                                    # closemes.buttonClicked.connect(self.close)
+                                    # closemes = closemes.exec_()
 
-                                    closemes.setWindowTitle("Успех")
-                                    closemes.setText(
-                                        "На ваш Email пришел код")
-                                    closemes.buttonClicked.connect(self.close)
-                                    closemes = closemes.exec_()
-
-                                if str(response) == "<Response [403]>":
+                                elif str(response) == "<Response [403]>":
                                     closemes = QtWidgets.QMessageBox()
                                     closemes.setWindowTitle("Ошибка")
                                     closemes.setText(
@@ -273,6 +276,44 @@ class Registration(QtWidgets.QWidget):
             closemes.setText("Ошибка подключения")
             closemes.buttonClicked.connect(closemes.close)
             closemes = closemes.exec_()
+
+
+class Email_dialog(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(Email_dialog, self).__init__()
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+
+        self.ui.label.setText(
+            f"Введите код, отправленный на \n{self.parent.ui.lineEdit_email.text()}")
+        self.ui.pushButton.clicked.connect(self.send_verification)
+
+    def send_verification(self):
+        if self.ui.lineEdit.text() != "":
+            email = self.parent.ui.lineEdit_email.text().lower()
+            login = self.parent.ui.lineEdit_login.text().lower()
+            password = self.parent.ui.lineEdit_password.text()
+            check_str = self.ui.lineEdit.text().upper()
+            response = post(
+                f"{response_address}/email_verification", data={"email": email, "login": login, "password": password, "check_str": check_str})
+
+            if str(response) == "<Response [200]>":
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Успех")
+                closemes.setText(
+                        "Регистрация прошла успешно")
+                closemes.buttonClicked.connect(
+                        closemes.close)
+                closemes = closemes.exec_()
+            elif str(response) == "<Response [403]>":
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Ошибка")
+                closemes.setText(
+                        "Проверьте правильность ввода кода подтверждения")
+                closemes.buttonClicked.connect(
+                        closemes.close)
+                closemes = closemes.exec_()
 
 
 if __name__ == "__main__":
