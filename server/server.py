@@ -71,6 +71,7 @@ class Server_http(web.View):
                     [choice(ascii_uppercase + digits)for i in range(6)])
                 request = f'INSERT INTO Verification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
                 await self.sql_request_users(request, "email_verification_plan")
+                print(email, login, password, check_str)
                 email_server.sendmail(
                     "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
                 return web.Response(status=200)
@@ -83,7 +84,8 @@ class Server_http(web.View):
 
     async def verification(self, email, login, password, check_str):
         try:
-            request = f'SELECT * FROM Verification WHERE Email = {email} AND Login = {login} AND Password = {password} AND CheckStr = {check_str}'
+            print(email, login, password, check_str)
+            request = f'SELECT * FROM Verification WHERE Email = "{email}" AND Login = "{login}" AND Password = "{password}" AND CheckStr = "{check_str}"'
             if await self.sql_request_users(request, "verification_check") == False:
                 return web.Response(status=403)
             else:
@@ -127,6 +129,7 @@ class Server_http(web.View):
                else:
                    email = result["email"]
                    login = result["login"]
+                   print(email, login)
                    cursor = await conn.execute(f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"')
                    await conn.commit()
                    await cursor.close()

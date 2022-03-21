@@ -95,7 +95,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.w2.show()
 
     def registration(self):
-        self.w3 = Registration()
+        self.w3 = Registration(self)
         self.w3.show()
 
     def select_contact(self):
@@ -194,12 +194,14 @@ class Login(QtWidgets.QWidget):
 
 
 class Registration(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, parent=None):
         super(Registration, self).__init__()
         self.ui = Ui_Registration()
         self.ui.setupUi(self)
+        self.parent = parent
 
         self.ui.pushButton_reg.clicked.connect(self.registration)
+        self.parent.setEnabled(False)
 
     def registration(self):
         try:
@@ -277,6 +279,9 @@ class Registration(QtWidgets.QWidget):
             closemes.buttonClicked.connect(closemes.close)
             closemes = closemes.exec_()
 
+    def closeEvent(self, event):
+        self.parent.setEnabled(True)
+
 
 class Email_dialog(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -288,15 +293,16 @@ class Email_dialog(QtWidgets.QWidget):
         self.ui.label.setText(
             f"Введите код, отправленный на \n{self.parent.ui.lineEdit_email.text()}")
         self.ui.pushButton.clicked.connect(self.send_verification)
+        self.parent.setEnabled(False)
 
     def send_verification(self):
         if self.ui.lineEdit.text() != "":
-            email = self.parent.ui.lineEdit_email.text().lower()
-            login = self.parent.ui.lineEdit_login.text().lower()
-            password = self.parent.ui.lineEdit_password.text()
-            check_str = self.ui.lineEdit.text().upper()
-            response = post(
-                f"{response_address}/email_verification", data={"email": email, "login": login, "password": password, "check_str": check_str})
+            self.email = self.parent.ui.lineEdit_email.text().lower()
+            self.login = self.parent.ui.lineEdit_login.text().lower()
+            self.password = self.parent.ui.lineEdit_password.text()
+            self.check_str = self.ui.lineEdit.text().upper()
+            response = post(f"{response_address}/email_verification", data={
+                            "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
 
             if str(response) == "<Response [200]>":
                 closemes = QtWidgets.QMessageBox()
@@ -304,8 +310,9 @@ class Email_dialog(QtWidgets.QWidget):
                 closemes.setText(
                         "Регистрация прошла успешно")
                 closemes.buttonClicked.connect(
-                        closemes.close)
+                        self.close)
                 closemes = closemes.exec_()
+
             elif str(response) == "<Response [403]>":
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
@@ -314,6 +321,11 @@ class Email_dialog(QtWidgets.QWidget):
                 closemes.buttonClicked.connect(
                         closemes.close)
                 closemes = closemes.exec_()
+
+    def closeEvent(self, event):
+        self.parent.setEnabled(True)
+        response = post(f"{response_address}/email_verification_delete", data={
+                        "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
 
 
 if __name__ == "__main__":
