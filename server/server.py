@@ -5,7 +5,8 @@ from smtplib import SMTP_SSL
 # import asyncio
 from aiohttp import web
 # from multidict import MultiDict, CIMultiDictProxy
-from random import randint
+from random import choice
+from string import ascii_uppercase, digits
 
 # пароль для ящика XQb56ic4VCy5ccwuvviH
 
@@ -35,6 +36,9 @@ class Server_http(web.View):
             elif path == "message":
                 return await self.message_def(data)
 
+            elif path == "email_verification":
+                return await self.verifification(data["email"], data["login"], data["password"], data["check_str"])
+
             else:
                 return web.Response(status=404)
 
@@ -61,14 +65,14 @@ class Server_http(web.View):
     async def registration_def(self, email, login, password):
         try:
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
-            # cursor.execute(
-            #     f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"')
-            # result = cursor.fetchall()
 
-            if not await self.sql_request_users(request, "registration"):
-                check_num = randint(100000, 999999)
-                request = f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")'
-                await self.sql_request_users(request)
+            if not await self.sql_request_users(request, "registration/check"):
+                check_str = [choice(ascii_uppercase + digits)for i in range(6)]
+
+                request = f'INSERT INTO Verifification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
+                await self.sql_request_users(request, "email_verification_plan")
+                email_server.sendmail(
+                    "yfen_python@mail.ru", email, f'Subject: Подтвердите регистрацию на YFenMessenger\nВаш код подтверждения: {check_str}')
                 return web.Response(status=200)
             else:
                 return web.Response(status=403)
@@ -76,23 +80,68 @@ class Server_http(web.View):
         except Exception:
             return web.Responce(status=500)
 
+    async def verifification(self, email, login, password, check_str):
+        request = f'SELECT * FROM Verifification WHERE Email = {email} AND Login = {login} AND Password = {password} AND CheckStr = {check_str}'
+        if await self.sql_request_users(request, "verifification_check") == False:
+            return web.Response(status=403)
+        else:
+            request = f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")'
+            await self.sql_request_users(request, "registration_final")
+
     async def message_def(self, data):
         return web.Response(status=200)
 
+        """----------------------------------------sql запросы---------------------------------------"""
     async def sql_request_users(self, request, request_type):
-        conn = await connect("./users.sqlite")
-        if request_type == "login":
-            cursor = await conn.execute(request)
-            result = await cursor.fetchone()
-            await cursor.close()
-            await conn.close()
-            return result
-        elif request_type == "registration":
-            cursor = await conn.execute(request)
-            await conn.commit()
-        await cursor.close()
-        await conn.close()
-        # print("db zakrita")
+        try:
+           if request_type == "login":
+               conn = await connect("./users.sqlite")
+               cursor = await conn.execute(request)
+               result = await cursor.fetchone()
+               await cursor.close()
+               await conn.close()
+               return result
+
+           elif request_type == "registration_check":
+               conn = await connect("./users.sqlite")
+               cursor = await conn.execute(request)
+               result = await cursor.fetchone()
+               await cursor.close()
+               await conn.close()
+               return result
+
+           elif request_type == "verifification_check":
+               conn = await connect("./email_verification.sqlite")
+               cursor = await conn.execute(request)
+               result = await cursor.fetchone()
+               if not result:
+                   await cursor.close()
+                   await conn.close()
+                   return False
+               else:
+                   email = result["email"]
+                   login = result["login"]
+                   cursor = await conn.execute(f'DELETE FROM Verifification WHERE Email = "{email}" AND Login = "{login}"')
+                   await conn.commit()
+                   await cursor.close()
+                   await conn.close()
+                   return True
+
+           elif request_type == "registration_final":
+               conn = await connect("./users.sqlite")
+               cursor = await conn.execute(request)
+               await conn.commit()
+
+           elif request_type == "email_verification_plan":
+               conn = await connect("./email_verification.sqlite")
+               cursor = await conn.execute(request)
+               await conn.commit()
+
+           await cursor.close()
+           await conn.close()
+           # print("db zakrita")
+        except:
+            return web.Responce(status=500)
 
 
 if __name__ == "__main__":

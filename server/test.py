@@ -1,17 +1,7 @@
-import aiosqlite
-import asyncio
+import random
+from string import ascii_uppercase, digits
 
+text = [random.choice(ascii_uppercase + digits)
+        for i in range(6)]
 
-async def asd():
-    db = await aiosqlite.connect("./users.sqlite")
-    cursor = await db.execute('SELECT * FROM Users WHERE Email = "yavmayn@bk.com"')
-    row = await cursor.fetchone()
-    print(row)
-    rows = await cursor.fetchall()
-    print(rows)
-    await cursor.close()
-    await db.close()
-
-loop = asyncio.get_event_loop()
-a = loop.create_task(asd())
-loop.run_until_complete(asyncio.wait([a]))
+print(''.join(text))
