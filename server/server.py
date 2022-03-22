@@ -39,6 +39,9 @@ class Server_http(web.View):
             elif path == "email_verification":
                 return await self.verification(data["email"], data["login"], data["password"], data["check_str"])
 
+            elif path == "friendship_request":
+                return await self.friendship_request()
+
             else:
                 return web.Response(status=404)
 
@@ -69,11 +72,16 @@ class Server_http(web.View):
             if not await self.sql_request_users(request, "registration_check"):
                 check_str = ''.join(
                     [choice(ascii_uppercase + digits)for i in range(6)])
+                try:
+                    email_server.sendmail(
+                        "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
+                except:
+                    return web.Response(status=550)
+
                 request = f'INSERT INTO Verification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
                 await self.sql_request_users(request, "email_verification_plan")
                 print(email, login, password, check_str)
-                email_server.sendmail(
-                    "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
+
                 return web.Response(status=200)
             else:
                 return web.Response(status=403)
@@ -86,7 +94,7 @@ class Server_http(web.View):
         try:
             print(email, login, password, check_str)
             request = f'SELECT * FROM Verification WHERE Email = "{email}" AND Login = "{login}" AND Password = "{password}" AND CheckStr = "{check_str}"'
-            if await self.sql_request_users(request, "verification_check") == False:
+            if await self.sql_request_users(request, "verification_check", email=f"{email}", login=f"{login}") == False:
                 return web.Response(status=403)
             else:
                 request = f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")'
@@ -99,8 +107,11 @@ class Server_http(web.View):
     async def message_def(self, data):
         return web.Response(status=200)
 
+    async def friendship_request(self):
+        pass
+
         """----------------------------------------sql запросы---------------------------------------"""
-    async def sql_request_users(self, request, request_type):
+    async def sql_request_users(self, request, request_type, **kwargs):
         try:
            if request_type == "login":
                conn = await connect("./users.sqlite")
@@ -127,8 +138,8 @@ class Server_http(web.View):
                    await conn.close()
                    return False
                else:
-                   email = result[1]
-                   login = result[2]
+                   email = kwargs["email"]
+                   login = result["login"]
                    print(email, login)
                    cursor = await conn.execute(f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"')
                    await conn.commit()
@@ -144,6 +155,13 @@ class Server_http(web.View):
                await conn.close()
 
            elif request_type == "email_verification_plan":
+               conn = await connect("./email_verification.sqlite")
+               cursor = await conn.execute(request)
+               await conn.commit()
+               await cursor.close()
+               await conn.close()
+
+           elif request_type == "friendship_request":
                conn = await connect("./email_verification.sqlite")
                cursor = await conn.execute(request)
                await conn.commit()

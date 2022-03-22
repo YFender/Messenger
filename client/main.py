@@ -34,8 +34,8 @@ class MyWin(QtWidgets.QMainWindow):
                 cursor.execute(
                     "SELECT Login, Password FROM User_log WHERE UserId = 1")
                 result = cursor.fetchone()
-                login, password = result[0], result[1]
-                result = {"login": login, "password": password}
+                self.login, self.password = result[0], result[1]
+                result = {"login": self.login, "password": self.password}
                 print(result)
                 conn.close()
 
@@ -52,7 +52,8 @@ class MyWin(QtWidgets.QMainWindow):
                     self.ui.tab_chat.setEnabled(True)
                     self.ui.login_pushbutton.hide()
                     self.ui.reg_pushbutton.hide()
-                    self.ui.label_unlog.setText(f"Авторизован как {login}")
+                    self.ui.label_unlog.setText(
+                        f"Авторизован как {self.login}")
                     self.ui.tabWidget.setCurrentIndex(0)
                     self.ui.label_unlog.show()
                     self.ui.pushButton_unlog.show()
@@ -75,7 +76,7 @@ class MyWin(QtWidgets.QMainWindow):
             closemes.buttonClicked.connect(self.close)
             closemes = closemes.exec_()
 
-        self.ui.login_pushbutton.clicked.connect(self.login)
+        self.ui.login_pushbutton.clicked.connect(self.login_def)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
         self.ui.pushButton_unlog.clicked.connect(self.unlog)
 
@@ -92,7 +93,7 @@ class MyWin(QtWidgets.QMainWindow):
     #         print(i[0])
     #         self.ui.listWidget_contacts.addItem(i[0])
 
-    def login(self):
+    def login_def(self):
         self.w2 = Login(self)
         self.w2.show()
 
@@ -112,7 +113,7 @@ class MyWin(QtWidgets.QMainWindow):
         closemes = closemes.exec_()
 
     def add_contact(self):
-        self.w4 = Add_contact()
+        self.w4 = Add_contact(self)
         self.w4.show()
 
 
@@ -242,6 +243,16 @@ class Registration(QtWidgets.QWidget):
                                     closemes.buttonClicked.connect(
                                             closemes.close)
                                     closemes = closemes.exec_()
+
+                                elif str(response) == "<Response [550]>":
+                                    closemes = QtWidgets.QMessageBox()
+                                    closemes.setWindowTitle("Ошибка")
+                                    closemes.setText(
+                                            "Такой электронной почты не существует")
+                                    closemes.buttonClicked.connect(
+                                            closemes.close)
+                                    closemes = closemes.exec_()
+
                             else:
                                 closemes = QtWidgets.QMessageBox()
                                 closemes.setWindowTitle("Ошибка")
@@ -339,6 +350,16 @@ class Add_contact(QtWidgets.QWidget):
         super(Add_contact, self).__init__()
         self.ui = Ui_Add_contact()
         self.ui.setupUi(self)
+        self.parent = parent
+
+        self.from_login = self.parent.login.text().lower()
+        self.to_login = self.ui.lineEdit.text().lower()
+
+        self.ui.pushButton.clicked.connect(self.friendship_request)
+
+    def friendship_request(self):
+        data = {"from_user": self.from_login, "to_user": self.to_login}
+        response = post(f"{response_address}/friendship_request", data=data)
 
 
 if __name__ == "__main__":
