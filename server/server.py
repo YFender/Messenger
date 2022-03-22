@@ -40,7 +40,10 @@ class Server_http(web.View):
                 return await self.verification(data["email"], data["login"], data["password"], data["check_str"])
 
             elif path == "email_verification_delete":
-                return web.Response(200)
+                email = data["email"]
+                login = data["login"]
+                request = f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"'
+                return await self.sql_request_users(request, "email_verification_delete")
 
             elif path == "friendship_request":
                 return await self.friendship_request()
@@ -172,6 +175,13 @@ class Server_http(web.View):
                await cursor.close()
                await conn.close()
 
+           elif request_type == "email_verification_delete":
+               conn = await connect("./email_verification.sqlite")
+               cursor = await conn.execute(request)
+               await conn.commit()
+               await cursor.close()
+               await conn.close()
+               return web.Response(status=200)
            # print("db zakrita")
         except Exception as ex:
             print(ex)
