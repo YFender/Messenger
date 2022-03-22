@@ -376,28 +376,39 @@ class Add_contact(QtWidgets.QWidget):
         self.from_login = self.parent.login.lower()
         self.to_login = self.ui.lineEdit.text().lower()
         if self.to_login != "":
-            try:
-                data = {"from_user": self.from_login, "to_user": self.to_login}
-                response = post(
-                    f"{response_address}/friendship_request", data=data)
-                if response == "<Response [200]>":
-                    closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Успех")
-                    closemes.setText(
-                            f"Запрос на добавление отправлен контакту {self.to_login}")
-                    closemes.buttonClicked.connect(
-                            self.close)
-                    closemes = closemes.exec_()
-                elif response == "<Response [404]>":
-                    closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Ошибка")
-                    closemes.setText(
-                            f"Пользователя {self.to_login} не существует")
-                    closemes.buttonClicked.connect(
-                            self.close)
-                    closemes = closemes.exec_()
-            except Exception as ex:
-                print(ex)
+            if self.to_login != self.parent.login:
+                try:
+                    data = {"from_user": self.from_login,
+                            "to_user": self.to_login}
+                    response = post(
+                        f"{response_address}/friendship_request", data=data)
+                    print(response)
+                    if str(response) == "<Response [200]>":
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Успех")
+                        closemes.setText(
+                                f"Запрос на добавление отправлен контакту {self.to_login}")
+                        closemes.buttonClicked.connect(
+                                self.close)
+                        closemes = closemes.exec_()
+                    elif str(response) == "<Response [404]>":
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Ошибка")
+                        closemes.setText(
+                                f"Пользователя {self.to_login} не существует")
+                        closemes.buttonClicked.connect(
+                                closemes.close)
+                        closemes = closemes.exec_()
+                except Exception as ex:
+                    print(ex)
+            else:
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Ошибка")
+                closemes.setText(
+                        f"Вы не можете отправить запрос самому себе")
+                closemes.buttonClicked.connect(
+                        closemes.close)
+                closemes = closemes.exec_()
 
 
 if __name__ == "__main__":

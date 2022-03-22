@@ -24,8 +24,6 @@ class Server_http(web.View):
             path = str(self.request.match_info.get('path', None))
             print(path)
             data = await self.request.post()
-            # print(data)
-            # print(data['login'])
 
             if path == "login":
                 return await self.login_def(str(data['login']), str(data['password']))
@@ -43,7 +41,6 @@ class Server_http(web.View):
                 return await self.email_verification_delete(data["email"], data["login"])
 
             elif path == "friendship_request":
-                print(data)
                 return await self.friendship_request(data["from_user"], data["to_user"])
 
             else:
@@ -60,9 +57,7 @@ class Server_http(web.View):
 
             if not await self.sql_request_users(request):
                 return web.Response(status=404)
-                print("not")
             else:
-                print("not not")
                 return web.Response(status=200)
 
         except Exception as ex:
@@ -71,6 +66,8 @@ class Server_http(web.View):
 
     async def registration_def(self, email, login, password):
         try:
+            email_server = SMTP_SSL("smtp.mail.ru", 465)
+            email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
 
             if not await self.sql_request_users(request):
@@ -80,16 +77,16 @@ class Server_http(web.View):
                     email_server.sendmail(
                         "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
                 except Exception as ex:
-                    print(ex)
+                    print(ex, "registration_error")
                     return web.Response(status=550)
 
                 request = f'INSERT INTO Verification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
                 await self.sql_request_users(request)
-                print(email, login, password, check_str)
 
                 return web.Response(status=200)
             else:
                 return web.Response(status=403)
+            email_server.close()
 
         except Exception as ex:
             print(ex, "registration_error")
@@ -97,7 +94,7 @@ class Server_http(web.View):
 
     async def verification(self, email, login, password, check_str):
         try:
-            print(email, login, password, check_str)
+
             request = f'SELECT * FROM Verification WHERE Email = "{email}" AND Login = "{login}" AND Password = "{password}" AND CheckStr = "{check_str}"'
             if not await self.sql_request_users(request):
                 return web.Response(status=403)
@@ -115,13 +112,13 @@ class Server_http(web.View):
         return web.Response(status=200)
 
     async def email_verification_delete(self, email, login):
-        print("email_verification_delete", email, login)
+
         request = f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"'
         await self.sql_request_users(request)
         return web.Responce(status=200)
 
     async def friendship_request(self, from_user, to_user):
-        print("friendship_request", from_user, to_user)
+
         request = f'SELECT * FROM USERS WHERE Login = "{to_user}"'
         if not await self.sql_request_users(request):
             return web.Response(status=404)
