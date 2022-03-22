@@ -43,6 +43,7 @@ class Server_http(web.View):
                 return await self.email_verification_delete(data["email"], data["login"])
 
             elif path == "friendship_request":
+                print(data)
                 return await self.friendship_request(data["from_user"], data["to_user"])
 
             else:
@@ -117,10 +118,17 @@ class Server_http(web.View):
         print("email_verification_delete", email, login)
         request = f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"'
         await self.sql_request_users(request)
+        return web.Responce(status=200)
 
     async def friendship_request(self, from_user, to_user):
-        request = f'INSERT INTO Friendship_request VALUES(Null, "{from_user}, {to_user}")'
-        return await self.sql_request_users(request)
+        print("friendship_request", from_user, to_user)
+        request = f'SELECT * FROM USERS WHERE Login = "{to_user}"'
+        if not await self.sql_request_users(request):
+            return web.Response(status=404)
+        else:
+            request = f'INSERT INTO Friendship_requests VALUES(Null, "{from_user}", "{to_user}")'
+            return await self.sql_request_users(request)
+            return web.Response(status=200)
 
         """----------------------------------------sql запросы---------------------------------------"""
     async def sql_request_users(self, request):
