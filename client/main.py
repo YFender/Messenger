@@ -312,11 +312,13 @@ class Email_dialog(QtWidgets.QWidget):
         self.ui.pushButton.clicked.connect(self.send_verification)
         self.parent.setEnabled(False)
 
+        self.email = self.parent.ui.lineEdit_email.text().lower()
+        self.login = self.parent.ui.lineEdit_login.text().lower()
+        self.password = self.parent.ui.lineEdit_password.text()
+
     def send_verification(self):
         if self.ui.lineEdit.text() != "":
-            self.email = self.parent.ui.lineEdit_email.text().lower()
-            self.login = self.parent.ui.lineEdit_login.text().lower()
-            self.password = self.parent.ui.lineEdit_password.text()
+
             self.check_str = self.ui.lineEdit.text().upper()
             response = post(f"{response_address}/email_verification", data={
                             "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
@@ -342,7 +344,7 @@ class Email_dialog(QtWidgets.QWidget):
     def closeEvent(self, event):
         self.parent.setEnabled(True)
         response = post(f"{response_address}/email_verification_delete", data={
-                        "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
+                        "email": self.email, "login": self.login, "password": self.password})
 
 
 class Add_contact(QtWidgets.QWidget):

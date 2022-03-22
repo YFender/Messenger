@@ -11,7 +11,7 @@ from string import ascii_uppercase, digits
 # пароль для ящика XQb56ic4VCy5ccwuvviH
 
 email_server = SMTP_SSL("smtp.mail.ru", 465)
-email_server.login("yfen_python@mail.ru", "XQb56ic4VCy5ccwuvviH")
+email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
 
 
 class Server_http(web.View):
@@ -38,6 +38,9 @@ class Server_http(web.View):
 
             elif path == "email_verification":
                 return await self.verification(data["email"], data["login"], data["password"], data["check_str"])
+
+            elif path == "email_verification_delete":
+                return web.Response(200)
 
             elif path == "friendship_request":
                 return await self.friendship_request()
@@ -75,7 +78,8 @@ class Server_http(web.View):
                 try:
                     email_server.sendmail(
                         "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
-                except:
+                except Exception as ex:
+                    print(ex)
                     return web.Response(status=550)
 
                 request = f'INSERT INTO Verification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
@@ -139,7 +143,7 @@ class Server_http(web.View):
                    return False
                else:
                    email = kwargs["email"]
-                   login = result["login"]
+                   login = kwargs["login"]
                    print(email, login)
                    cursor = await conn.execute(f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"')
                    await conn.commit()
