@@ -22,6 +22,7 @@ class MyWin(QtWidgets.QMainWindow):
 
         self.ui.label_unlog.hide()
         self.ui.pushButton_unlog.hide()
+        self.ui.tab_chat.setEnabled(False)
 
         try:
             if not path.isfile("./user_log.sqlite"):
@@ -33,7 +34,7 @@ class MyWin(QtWidgets.QMainWindow):
                 cursor.execute(
                     "SELECT Login, Password FROM User_log WHERE UserId = 1")
                 result = cursor.fetchone()
-                login, password = result[0][0], result[0][1]
+                login, password = result[0], result[1]
                 result = {"login": login, "password": password}
                 print(result)
                 conn.close()
@@ -56,8 +57,8 @@ class MyWin(QtWidgets.QMainWindow):
                     self.ui.label_unlog.show()
                     self.ui.pushButton_unlog.show()
 
-                    response_check_contacts = post(
-                        f"{response_address}/check_contacts")
+                    # response_check_contacts = post(
+                    #     f"{response_address}/check_contacts")
 
                 elif str(response_login) == "<Response [404]>":
                     closemes = QtWidgets.QMessageBox()
@@ -80,6 +81,7 @@ class MyWin(QtWidgets.QMainWindow):
 
         self.ui.pushButton_delete_user.setEnabled(False)
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
+        self.ui.pushButton_add_contact.clicked.connect(self.add_contact)
 
         # self.read_contacts()
 
@@ -108,6 +110,10 @@ class MyWin(QtWidgets.QMainWindow):
         closemes.setText("Приложение будет перезапущено")
         closemes.buttonClicked.connect(self.close)
         closemes = closemes.exec_()
+
+    def add_contact(self):
+        self.w4 = Add_contact()
+        self.w4.show()
 
 
 class Login(QtWidgets.QWidget):
@@ -326,6 +332,13 @@ class Email_dialog(QtWidgets.QWidget):
         self.parent.setEnabled(True)
         response = post(f"{response_address}/email_verification_delete", data={
                         "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
+
+
+class Add_contact(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(Add_contact, self).__init__()
+        self.ui = Ui_Add_contact()
+        self.ui.setupUi(self)
 
 
 if __name__ == "__main__":

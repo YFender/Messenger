@@ -44,7 +44,7 @@ class Server_http(web.View):
 
         except Exception as ex:
             return web.Response(status=500)
-            # print(ex)
+            print(ex)
 
     async def login_def(self, login, password):
         try:
@@ -127,8 +127,8 @@ class Server_http(web.View):
                    await conn.close()
                    return False
                else:
-                   email = result["email"]
-                   login = result["login"]
+                   email = result[1]
+                   login = result[2]
                    print(email, login)
                    cursor = await conn.execute(f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"')
                    await conn.commit()
