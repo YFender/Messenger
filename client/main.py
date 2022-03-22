@@ -352,6 +352,11 @@ class Email_dialog(QtWidgets.QWidget):
 
     def closeEvent(self, event):
         self.parent.setEnabled(True)
+        try:
+            post(f"{response_address}/email_verification_delete",
+                 data={"email": self.email, "login": self.login})
+        except:
+            pass
 
 
 class Add_contact(QtWidgets.QWidget):

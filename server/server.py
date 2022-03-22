@@ -113,8 +113,10 @@ class Server_http(web.View):
     async def message_def(self, data):
         return web.Response(status=200)
 
-    async def email_verification_delete(self):
-        pass
+    async def email_verification_delete(self, email, login):
+        print("email_verification_delete", email, login)
+        request = f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"'
+        await self.sql_request_users(request)
 
     async def friendship_request(self, from_user, to_user):
         request = f'INSERT INTO Friendship_request VALUES(Null, "{from_user}, {to_user}")'
