@@ -1,5 +1,5 @@
 from sys import argv, exit
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from client import Ui_Client_MainWindow
 from login import Ui_Login
 from registration import Ui_Registration
@@ -23,6 +23,9 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.label_unlog.hide()
         self.ui.pushButton_unlog.hide()
         self.ui.tab_chat.setEnabled(False)
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.check_contacts)
+        self.timer.start(1000)
 
         try:
             if not path.isfile("./user_log.sqlite"):
@@ -58,9 +61,6 @@ class MyWin(QtWidgets.QMainWindow):
                     self.ui.label_unlog.show()
                     self.ui.pushButton_unlog.show()
 
-                    # response_check_contacts = post(
-                    #     f"{response_address}/check_contacts")
-
                 elif str(response_login) == "<Response [404]>":
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
@@ -84,7 +84,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
         self.ui.pushButton_add_contact.clicked.connect(self.add_contact)
 
-        # self.read_contacts()
+        self.check_contacts()
 
     # def read_contacts(self):
     #     cursor.execute("SELECT ContactName FROM Contacts")
@@ -116,6 +116,16 @@ class MyWin(QtWidgets.QMainWindow):
         self.w4 = Add_contact(self)
         self.w4.show()
 
+    def check_contacts(self):
+        try:
+            response = post(f"{response_address}/check_contacts")
+            if response == "<Response [200]>":
+                pass
+            else:
+                self.timer.stop()
+        except:
+            self.timer.stop()
+
 
 class Login(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -131,7 +141,6 @@ class Login(QtWidgets.QWidget):
     def login(self):
         if self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "":
             try:
-                blacklist = "' " + '"‘’“”‚„'
                 login = self.ui.lineEdit_login.text().lower()
                 if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', login):
                     password = self.ui.lineEdit_password.text()
@@ -343,8 +352,6 @@ class Email_dialog(QtWidgets.QWidget):
 
     def closeEvent(self, event):
         self.parent.setEnabled(True)
-        response = post(f"{response_address}/email_verification_delete", data={
-                        "email": self.email, "login": self.login, "password": self.password})
 
 
 class Add_contact(QtWidgets.QWidget):

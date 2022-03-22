@@ -8,7 +8,7 @@ from aiohttp import web
 from random import choice
 from string import ascii_uppercase, digits
 
-# пароль для ящика XQb56ic4VCy5ccwuvviH
+# пароль для ящика 1UYJ5rCiuKbqKJyFLGtB
 
 email_server = SMTP_SSL("smtp.mail.ru", 465)
 email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
@@ -40,27 +40,24 @@ class Server_http(web.View):
                 return await self.verification(data["email"], data["login"], data["password"], data["check_str"])
 
             elif path == "email_verification_delete":
-                email = data["email"]
-                login = data["login"]
-                request = f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"'
-                return await self.sql_request_users(request, "email_verification_delete")
+                return await self.email_verification_delete(data["email"], data["login"])
 
             elif path == "friendship_request":
-                return await self.friendship_request()
+                return await self.friendship_request(data["from_user"], data["to_user"])
 
             else:
                 return web.Response(status=404)
 
         except Exception as ex:
             return web.Response(status=500)
-            print(ex)
+            print(ex, "post_request_error")
 
     async def login_def(self, login, password):
         try:
 
             request = f'SELECT * FROM Users WHERE Login = "{login}" AND Password = "{password}" '
 
-            if not await self.sql_request_users(request, "login"):
+            if not await self.sql_request_users(request):
                 return web.Response(status=404)
                 print("not")
             else:
@@ -69,13 +66,13 @@ class Server_http(web.View):
 
         except Exception as ex:
             return web.Response(status=500)
-            print(ex)
+            print(ex, "login_error")
 
     async def registration_def(self, email, login, password):
         try:
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
 
-            if not await self.sql_request_users(request, "registration_check"):
+            if not await self.sql_request_users(request):
                 check_str = ''.join(
                     [choice(ascii_uppercase + digits)for i in range(6)])
                 try:
@@ -86,7 +83,7 @@ class Server_http(web.View):
                     return web.Response(status=550)
 
                 request = f'INSERT INTO Verification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
-                await self.sql_request_users(request, "email_verification_plan")
+                await self.sql_request_users(request)
                 print(email, login, password, check_str)
 
                 return web.Response(status=200)
@@ -94,97 +91,51 @@ class Server_http(web.View):
                 return web.Response(status=403)
 
         except Exception as ex:
-            print(ex)
+            print(ex, "registration_error")
             return web.Response(status=500)
 
     async def verification(self, email, login, password, check_str):
         try:
             print(email, login, password, check_str)
             request = f'SELECT * FROM Verification WHERE Email = "{email}" AND Login = "{login}" AND Password = "{password}" AND CheckStr = "{check_str}"'
-            if await self.sql_request_users(request, "verification_check", email=f"{email}", login=f"{login}") == False:
+            if not await self.sql_request_users(request):
                 return web.Response(status=403)
             else:
+                request = f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"'
+                await self.sql_request_users(request)
                 request = f'INSERT INTO Users VALUES(Null, "{email}", "{login}", "{password}")'
-                await self.sql_request_users(request, "registration_final")
+                await self.sql_request_users(request)
                 return web.Response(status=200)
         except Exception as ex:
-            print(ex)
+            print(ex, "verification_error")
             return web.Response(status=500)
 
     async def message_def(self, data):
         return web.Response(status=200)
 
-    async def friendship_request(self):
+    async def email_verification_delete(self):
         pass
 
+    async def friendship_request(self, from_user, to_user):
+        request = f'INSERT INTO Friendship_request VALUES(Null, "{from_user}, {to_user}")'
+        return await self.sql_request_users(request)
+
         """----------------------------------------sql запросы---------------------------------------"""
-    async def sql_request_users(self, request, request_type, **kwargs):
+    async def sql_request_users(self, request):
         try:
-           if request_type == "login":
-               conn = await connect("./users.sqlite")
-               cursor = await conn.execute(request)
-               result = await cursor.fetchone()
-               await cursor.close()
-               await conn.close()
-               return result
-
-           elif request_type == "registration_check":
-               conn = await connect("./users.sqlite")
-               cursor = await conn.execute(request)
-               result = await cursor.fetchone()
-               await cursor.close()
-               await conn.close()
-               return result
-
-           elif request_type == "verification_check":
-               conn = await connect("./email_verification.sqlite")
-               cursor = await conn.execute(request)
-               result = await cursor.fetchone()
-               if not result:
-                   await cursor.close()
-                   await conn.close()
-                   return False
-               else:
-                   email = kwargs["email"]
-                   login = kwargs["login"]
-                   print(email, login)
-                   cursor = await conn.execute(f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"')
-                   await conn.commit()
-                   await cursor.close()
-                   await conn.close()
-                   return True
-
-           elif request_type == "registration_final":
-               conn = await connect("./users.sqlite")
-               cursor = await conn.execute(request)
-               await conn.commit()
-               await cursor.close()
-               await conn.close()
-
-           elif request_type == "email_verification_plan":
-               conn = await connect("./email_verification.sqlite")
-               cursor = await conn.execute(request)
-               await conn.commit()
-               await cursor.close()
-               await conn.close()
-
-           elif request_type == "friendship_request":
-               conn = await connect("./email_verification.sqlite")
-               cursor = await conn.execute(request)
-               await conn.commit()
-               await cursor.close()
-               await conn.close()
-
-           elif request_type == "email_verification_delete":
-               conn = await connect("./email_verification.sqlite")
-               cursor = await conn.execute(request)
-               await conn.commit()
-               await cursor.close()
-               await conn.close()
-               return web.Response(status=200)
-           # print("db zakrita")
+            conn = await connect("./database.sqlite")
+            cursor = await conn.execute(request)
+            if "SELECT" in request:
+                result = await cursor.fetchone()
+                await cursor.close()
+                await conn.close()
+                return result
+            elif "DELETE" in request or "INSERT" in request:
+                await conn.commit()
+                await cursor.close()
+                await conn.close()
         except Exception as ex:
-            print(ex)
+            print(ex, "sql_error")
             return web.Response(status=500)
 
 
