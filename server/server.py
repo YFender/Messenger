@@ -1,17 +1,13 @@
-# from http.server import BaseHTTPRequestHandler, HTTPServer
-# from urllib import parse
 from aiosqlite import connect
 from smtplib import SMTP_SSL
-# import asyncio
 from aiohttp import web
-# from multidict import MultiDict, CIMultiDictProxy
 from random import choice
 from string import ascii_uppercase, digits
 
 # пароль для ящика 1UYJ5rCiuKbqKJyFLGtB
 
 email_server = SMTP_SSL("smtp.mail.ru", 465)
-email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
+# email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
 
 
 class Server_http(web.View):
@@ -43,6 +39,9 @@ class Server_http(web.View):
             elif path == "friendship_request":
                 return await self.friendship_request(data["from_user"], data["to_user"])
 
+            elif path == "friendship_requests_check":
+                return web.Response(status=404)
+
             else:
                 return web.Response(status=404)
 
@@ -66,10 +65,7 @@ class Server_http(web.View):
 
     async def registration_def(self, email, login, password):
         try:
-            email_server = SMTP_SSL("smtp.mail.ru", 465)
-            email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
-
             if not await self.sql_request_users(request):
                 check_str = ''.join(
                     [choice(ascii_uppercase + digits)for i in range(6)])
@@ -77,8 +73,15 @@ class Server_http(web.View):
                     email_server.sendmail(
                         "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
                 except Exception as ex:
-                    print(ex, "registration_error")
-                    return web.Response(status=550)
+                    print("registration_error", ex)
+                    try:
+                        email_server.login(
+                            "yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
+                        email_server.sendmail(
+                            "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
+                    except Exception as ex:
+                        print(ex, "registration_error")
+                        return web.Response(status=550)
 
                 request = f'INSERT INTO Verification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
                 await self.sql_request_users(request)
@@ -150,5 +153,4 @@ if __name__ == "__main__":
     app = web.Application()
     app.router.add_view('/{path}', Server_http)
     app.router.add_view('', Server_http)
-
     web.run_app(app, port=8080)

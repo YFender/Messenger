@@ -23,6 +23,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.label_unlog.hide()
         self.ui.pushButton_unlog.hide()
         self.ui.tab_chat.setEnabled(False)
+
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.check_contacts)
         self.timer.start(1000)
@@ -86,13 +87,6 @@ class MyWin(QtWidgets.QMainWindow):
 
         self.check_contacts()
 
-    # def read_contacts(self):
-    #     cursor.execute("SELECT ContactName FROM Contacts")
-    #     results = cursor.fetchall()
-    #     for i in results:
-    #         print(i[0])
-    #         self.ui.listWidget_contacts.addItem(i[0])
-
     def login_def(self):
         self.w2 = Login(self)
         self.w2.show()
@@ -133,8 +127,6 @@ class Login(QtWidgets.QWidget):
         self.ui = Ui_Login()
         self.ui.setupUi(self)
         self.parent = parent
-
-        # self.parent.ui.tabWidget.setEnabled(False)
 
         self.ui.pushButton_authorize.clicked.connect(self.login)
 
@@ -328,25 +320,31 @@ class Email_dialog(QtWidgets.QWidget):
 
     def send_verification(self):
         if self.ui.lineEdit.text() != "":
+            try:
+                self.check_str = self.ui.lineEdit.text().upper()
+                response = post(f"{response_address}/email_verification", data={
+                                "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
 
-            self.check_str = self.ui.lineEdit.text().upper()
-            response = post(f"{response_address}/email_verification", data={
-                            "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
+                if str(response) == "<Response [200]>":
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Успех")
+                    closemes.setText(
+                            "Регистрация прошла успешно")
+                    closemes.buttonClicked.connect(
+                            self.close)
+                    closemes = closemes.exec_()
 
-            if str(response) == "<Response [200]>":
-                closemes = QtWidgets.QMessageBox()
-                closemes.setWindowTitle("Успех")
-                closemes.setText(
-                        "Регистрация прошла успешно")
-                closemes.buttonClicked.connect(
-                        self.close)
-                closemes = closemes.exec_()
-
-            elif str(response) == "<Response [403]>":
-                closemes = QtWidgets.QMessageBox()
-                closemes.setWindowTitle("Ошибка")
-                closemes.setText(
-                        "Проверьте правильность ввода кода подтверждения")
+                elif str(response) == "<Response [403]>":
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Ошибка")
+                    closemes.setText(
+                            "Проверьте правильность ввода кода подтверждения")
+                    closemes.buttonClicked.connect(
+                            closemes.close)
+                    closemes = closemes.exec_()
+            except:
+                closemes = QtWidgets.QMessageBox.critical(
+                    self, "Ошибка", "Ошибка подключения")
                 closemes.buttonClicked.connect(
                         closemes.close)
                 closemes = closemes.exec_()
@@ -391,6 +389,7 @@ class Add_contact(QtWidgets.QWidget):
                         closemes.buttonClicked.connect(
                                 self.close)
                         closemes = closemes.exec_()
+
                     elif str(response) == "<Response [404]>":
                         closemes = QtWidgets.QMessageBox()
                         closemes.setWindowTitle("Ошибка")
@@ -399,13 +398,15 @@ class Add_contact(QtWidgets.QWidget):
                         closemes.buttonClicked.connect(
                                 closemes.close)
                         closemes = closemes.exec_()
+
                 except Exception as ex:
                     print(ex)
+
             else:
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText(
-                        f"Вы не можете отправить запрос самому себе")
+                        "Вы не можете отправить запрос самому себе")
                 closemes.buttonClicked.connect(
                         closemes.close)
                 closemes = closemes.exec_()
