@@ -140,7 +140,7 @@ class Server_http(web.View):
                 await cursor.close()
                 await conn.close()
                 return result
-            elif "DELETE" in request or "INSERT" in request:
+            elif "DELETE" in request or "INSERT" in request or "CREATE" in request:
                 await conn.commit()
                 await cursor.close()
                 await conn.close()
