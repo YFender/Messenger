@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets, QtCore
 from client import Ui_Client_MainWindow
 from login import Ui_Login
 from registration import Ui_Registration
-from add_contact import Ui_Add_contact
+# from add_contact import Ui_Add_contact
 from sqlite3 import connect
 from os import path, remove
 from requests import post
@@ -23,6 +23,9 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.label_unlog.hide()
         self.ui.pushButton_unlog.hide()
         self.ui.tab_chat.setEnabled(False)
+
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self.check_contacts)
 
         try:
             if not path.isfile("./user_log.sqlite"):
@@ -66,9 +69,7 @@ class MyWin(QtWidgets.QMainWindow):
                     closemes = closemes.exec_()
                     remove("./user_log.sqlite")
 
-                self.timer = QtCore.QTimer()
-                self.timer.timeout.connect(self.check_contacts)
-                self.timer.start(1000)
+                self.timer.start(0)
 
         except:
             closemes = QtWidgets.QMessageBox()
@@ -86,9 +87,6 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_add_contact.clicked.connect(self.add_contact)
 
         self.check_contacts()
-
-        # buttons = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
-        # buttonBox = QtWidgets.QDialogButtonBox(buttons)
 
     def login_def(self):
         self.w2 = Login(self)
@@ -156,7 +154,7 @@ class MyWin(QtWidgets.QMainWindow):
         try:
             response = post(f"{response_address}/check_contacts")
             if response == "<Response [200]>":
-                self.w7 = Check_contacts_dialog()
+                self.w7 = Check_contacts_dialog(self)
                 self.w7.show()
             else:
                 self.timer.stop()
@@ -208,9 +206,7 @@ class Login(QtWidgets.QWidget):
                             self.parent.ui.pushButton_unlog.show()
                             self.parent.login = login
 
-                            self.timer = QtCore.QTimer()
-                            self.timer.timeout.connect(self.check_contacts)
-                            self.timer.start(1000)
+                            self.timer.start(0)
 
                         if str(response) == "<Response [404]>":
                             closemes = QtWidgets.QMessageBox()
@@ -403,69 +399,6 @@ class Email_dialog(QtWidgets.QWidget):
                  data={"email": self.email, "login": self.login})
         except:
             pass
-
-
-class Add_contact(QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        super(Add_contact, self).__init__()
-        self.ui = Ui_Add_contact()
-        self.ui.setupUi(self)
-        self.parent = parent
-
-        self.from_login = self.parent.login.lower()
-        self.to_login = self.ui.lineEdit.text().lower()
-
-        self.ui.pushButton.clicked.connect(self.friendship_request)
-
-    def friendship_request(self):
-        self.from_login = self.parent.login.lower()
-        self.to_login = self.ui.lineEdit.text().lower()
-        if self.to_login != "":
-            if self.to_login != self.parent.login:
-                try:
-                    data = {"from_user": self.from_login,
-                            "to_user": self.to_login}
-                    response = post(
-                        f"{response_address}/friendship_request", data=data)
-                    print(response)
-                    if str(response) == "<Response [200]>":
-                        closemes = QtWidgets.QMessageBox()
-                        closemes.setWindowTitle("Успех")
-                        closemes.setText(
-                                f"Запрос на добавление отправлен контакту {self.to_login}")
-                        closemes.buttonClicked.connect(
-                                self.close)
-                        closemes = closemes.exec_()
-
-                    elif str(response) == "<Response [404]>":
-                        closemes = QtWidgets.QMessageBox()
-                        closemes.setWindowTitle("Ошибка")
-                        closemes.setText(
-                                f"Пользователя {self.to_login} не существует")
-                        closemes.buttonClicked.connect(
-                                closemes.close)
-                        closemes = closemes.exec_()
-
-                    elif str(response) == "<Response [403]>":
-                        closemes = QtWidgets.QMessageBox()
-                        closemes.setWindowTitle("Ошибка")
-                        closemes.setText(
-                                "Запрос уже был отправлен")
-                        closemes.buttonClicked.connect(
-                                closemes.close)
-                        closemes = closemes.exec_()
-
-                except Exception as ex:
-                    print(ex)
-
-            else:
-                closemes = QtWidgets.QMessageBox()
-                closemes.setWindowTitle("Ошибка")
-                closemes.setText(
-                        "Вы не можете отправить запрос самому себе")
-                closemes.buttonClicked.connect(
-                        closemes.close)
-                closemes = closemes.exec_()
 
 
 class Check_contacts_dialog(QtWidgets.QDialog):
