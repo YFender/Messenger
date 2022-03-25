@@ -126,9 +126,13 @@ class Server_http(web.View):
         if not await self.sql_request_users(request):
             return web.Response(status=404)
         else:
-            request = f'INSERT INTO Friendship_requests VALUES(Null, "{from_user}", "{to_user}")'
-            return await self.sql_request_users(request)
-            return web.Response(status=200)
+            request = f'SELECT * FROM Friendship_requests WHERE From_user = "{from_user}" AND To_user = "{to_user}"'
+            if not await self.sql_request_users(request):
+                request = f'INSERT INTO Friendship_requests VALUES(Null, "{from_user}", "{to_user}")'
+                await self.sql_request_users(request)
+                return web.Response(status=200)
+            else:
+                return web.Response(status=403)
 
         """----------------------------------------sql запросы---------------------------------------"""
     async def sql_request_users(self, request):

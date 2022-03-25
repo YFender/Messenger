@@ -107,8 +107,47 @@ class MyWin(QtWidgets.QMainWindow):
         closemes = closemes.exec_()
 
     def add_contact(self):
-        self.w4 = Add_contact(self)
-        self.w4.show()
+        text, ok = QtWidgets.QInputDialog.getText(
+            self, 'Добавление контакта', 'Введите имя пользователя')
+        if ok and text != "":
+            try:
+                from_user = self.login.lower()
+                to_user = text.lower()
+                data = {"from_user": from_user, "to_user": to_user}
+                response = post(
+                    f"{response_address}/friendship_request", data=data)
+                print(response)
+                if str(response) == "<Response [200]>":
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Успех")
+                    closemes.setText(
+                            f"Запрос на добавление отправлен контакту {to_user}")
+                    closemes.buttonClicked.connect(
+                            self.close)
+                    closemes = closemes.exec_()
+
+                elif str(response) == "<Response [404]>":
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Ошибка")
+                    closemes.setText(
+                            f"Пользователя {to_user} не существует")
+                    closemes.buttonClicked.connect(
+                            closemes.close)
+                    closemes = closemes.exec_()
+
+                elif str(response) == "<Response [403]>":
+                    closemes = QtWidgets.QMessageBox()
+                    closemes.setWindowTitle("Ошибка")
+                    closemes.setText(
+                            "Запрос уже был отправлен")
+                    closemes.buttonClicked.connect(
+                            closemes.close)
+                    closemes = closemes.exec_()
+            except Exception as ex:
+                print(ex)
+
+        # self.w4 = Add_contact(self)
+        # self.w4.show()
 
     def check_contacts(self):
         try:
@@ -395,6 +434,15 @@ class Add_contact(QtWidgets.QWidget):
                         closemes.setWindowTitle("Ошибка")
                         closemes.setText(
                                 f"Пользователя {self.to_login} не существует")
+                        closemes.buttonClicked.connect(
+                                closemes.close)
+                        closemes = closemes.exec_()
+
+                    elif str(response) == "<Response [403]>":
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Ошибка")
+                        closemes.setText(
+                                "Запрос уже был отправлен")
                         closemes.buttonClicked.connect(
                                 closemes.close)
                         closemes = closemes.exec_()
