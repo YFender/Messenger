@@ -152,6 +152,9 @@ class Server_http(web.View):
             print(ex, "sql_error")
             return web.Response(status=500)
 
+    async def friendship_request_check():
+        pass
+
 
 if __name__ == "__main__":
     app = web.Application()

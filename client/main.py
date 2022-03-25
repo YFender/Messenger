@@ -24,10 +24,6 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_unlog.hide()
         self.ui.tab_chat.setEnabled(False)
 
-        self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.check_contacts)
-        self.timer.start(1000)
-
         try:
             if not path.isfile("./user_log.sqlite"):
                 self.ui.tabWidget.setCurrentIndex(1)
@@ -70,6 +66,10 @@ class MyWin(QtWidgets.QMainWindow):
                     closemes = closemes.exec_()
                     remove("./user_log.sqlite")
 
+                self.timer = QtCore.QTimer()
+                self.timer.timeout.connect(self.check_contacts)
+                self.timer.start(1000)
+
         except:
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
@@ -86,6 +86,9 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_add_contact.clicked.connect(self.add_contact)
 
         self.check_contacts()
+
+        # buttons = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
+        # buttonBox = QtWidgets.QDialogButtonBox(buttons)
 
     def login_def(self):
         self.w2 = Login(self)
@@ -153,7 +156,8 @@ class MyWin(QtWidgets.QMainWindow):
         try:
             response = post(f"{response_address}/check_contacts")
             if response == "<Response [200]>":
-                pass
+                self.w7 = Check_contacts_dialog()
+                self.w7.show()
             else:
                 self.timer.stop()
         except:
@@ -203,6 +207,10 @@ class Login(QtWidgets.QWidget):
                             self.parent.ui.label_unlog.show()
                             self.parent.ui.pushButton_unlog.show()
                             self.parent.login = login
+
+                            self.timer = QtCore.QTimer()
+                            self.timer.timeout.connect(self.check_contacts)
+                            self.timer.start(1000)
 
                         if str(response) == "<Response [404]>":
                             closemes = QtWidgets.QMessageBox()
@@ -460,8 +468,29 @@ class Add_contact(QtWidgets.QWidget):
                 closemes = closemes.exec_()
 
 
+class Check_contacts_dialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("HELLO!")
+
+        QBtn = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
+
+        self.buttonBox = QtWidgets.QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout = QtWidgets.QVBoxLayout()
+        message = QtWidgets.QLabel("Something happened, is that OK?")
+        self.layout.addWidget(message)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication(argv)
     myapp = MyWin()
+    myapp.show()
+    exit(app.exec_())
     myapp.show()
     exit(app.exec_())
