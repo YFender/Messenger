@@ -7,7 +7,7 @@ from string import ascii_uppercase, digits
 # пароль для ящика 1UYJ5rCiuKbqKJyFLGtB
 
 email_server = SMTP_SSL("smtp.mail.ru", 465)
-# email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
+email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
 
 
 class Server_http(web.View):
@@ -40,14 +40,15 @@ class Server_http(web.View):
                 return await self.friendship_request(data["from_user"], data["to_user"])
 
             elif path == "friendship_requests_check":
-                return web.Response(status=404)
+                return await self.friendship_request_check(data["login"])
+                # return web.Response(status=404)
 
             else:
                 return web.Response(status=404)
 
         except Exception as ex:
-            return web.Response(status=500)
             print(ex, "post_request_error")
+            return web.Response(status=500)
 
     async def login_def(self, login, password):
         try:
@@ -60,8 +61,8 @@ class Server_http(web.View):
                 return web.Response(status=200)
 
         except Exception as ex:
-            return web.Response(status=500)
             print(ex, "login_error")
+            return web.Response(status=500)
 
     async def registration_def(self, email, login, password):
         try:
@@ -118,7 +119,7 @@ class Server_http(web.View):
 
         request = f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"'
         await self.sql_request_users(request)
-        return web.Responce(status=200)
+        return web.Response(status=200)
 
     async def friendship_request(self, from_user, to_user):
 
@@ -133,6 +134,13 @@ class Server_http(web.View):
                 return web.Response(status=200)
             else:
                 return web.Response(status=403)
+
+    async def friendship_request_check(self, login):
+        request = f'SELECT * FROM Friendship_requests WHERE To_user = "{login}"'
+        if not self.sql_request_users(request):
+            return web.Response(status=404, text="asdasdasd")
+        else:
+            return web.Response(status=200, text="asdasd")
 
         """----------------------------------------sql запросы---------------------------------------"""
     async def sql_request_users(self, request):
@@ -151,9 +159,6 @@ class Server_http(web.View):
         except Exception as ex:
             print(ex, "sql_error")
             return web.Response(status=500)
-
-    async def friendship_request_check():
-        pass
 
 
 if __name__ == "__main__":

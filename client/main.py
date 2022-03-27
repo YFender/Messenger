@@ -25,7 +25,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.tab_chat.setEnabled(False)
 
         self.timer = QtCore.QTimer()
-        self.timer.timeout.connect(self.check_contacts)
+        # self.timer.timeout.connect(self.check_contacts)
 
         try:
             if not path.isfile("./user_log.sqlite"):
@@ -45,7 +45,7 @@ class MyWin(QtWidgets.QMainWindow):
                 response_login = post(
                     f"{response_address}/login", data=result)
 
-                if str(response_login) == "<Response [200]>":
+                if response_login.status_code == 200:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Успех")
                     closemes.setText("Подключение установлено")
@@ -61,7 +61,7 @@ class MyWin(QtWidgets.QMainWindow):
                     self.ui.label_unlog.show()
                     self.ui.pushButton_unlog.show()
 
-                elif str(response_login) == "<Response [404]>":
+                elif response_login.status_code == 404:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
                     closemes.setText("Проверьте правильность логина/пароля")
@@ -71,7 +71,8 @@ class MyWin(QtWidgets.QMainWindow):
 
                 self.timer.start(0)
 
-        except:
+        except Exception as ex:
+            print(ex)
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
             closemes.setText("Ошибка подключения")
@@ -117,8 +118,7 @@ class MyWin(QtWidgets.QMainWindow):
                 data = {"from_user": from_user, "to_user": to_user}
                 response = post(
                     f"{response_address}/friendship_request", data=data)
-                print(response)
-                if str(response) == "<Response [200]>":
+                if response.status_code == 200:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Успех")
                     closemes.setText(
@@ -127,7 +127,7 @@ class MyWin(QtWidgets.QMainWindow):
                             self.close)
                     closemes = closemes.exec_()
 
-                elif str(response) == "<Response [404]>":
+                elif response.status_code == 404:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
                     closemes.setText(
@@ -136,7 +136,7 @@ class MyWin(QtWidgets.QMainWindow):
                             closemes.close)
                     closemes = closemes.exec_()
 
-                elif str(response) == "<Response [403]>":
+                elif response.status_code == 403:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
                     closemes.setText(
@@ -152,13 +152,16 @@ class MyWin(QtWidgets.QMainWindow):
 
     def check_contacts(self):
         try:
-            response = post(f"{response_address}/check_contacts")
-            if response == "<Response [200]>":
+            response = post(
+                f"{response_address}/friendship_requests_check", data={"login": self.login})
+            print(response)
+            if response.status_code == 200:
                 self.w7 = Check_contacts_dialog(self)
                 self.w7.show()
             else:
                 self.timer.stop()
-        except:
+        except Exception as ex:
+            print(ex)
             self.timer.stop()
 
 
@@ -181,7 +184,7 @@ class Login(QtWidgets.QWidget):
                         data = {"login": login, "password": password}
                         response = post(
                             f"{response_address}/login", data=data)
-                        if str(response) == "<Response [200]>":
+                        if response.status_code == 200:
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Успех")
                             closemes.setText("Подключение установлено")
@@ -206,9 +209,9 @@ class Login(QtWidgets.QWidget):
                             self.parent.ui.pushButton_unlog.show()
                             self.parent.login = login
 
-                            self.timer.start(0)
+                            self.parent.timer.start(0)
 
-                        if str(response) == "<Response [404]>":
+                        if response.status_code == 404:
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Ошибка")
                             closemes.setText(
@@ -228,7 +231,8 @@ class Login(QtWidgets.QWidget):
                     closemes.buttonClicked.connect(closemes.close)
                     closemes = closemes.exec_()
 
-            except:
+            except Exception as ex:
+                print(ex)
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText("Ошибка подключения")
@@ -269,7 +273,7 @@ class Registration(QtWidgets.QWidget):
                                 response = post(f"{response_address}/registration", data={
                                                          "email": email, "login": login, "password": password})
                                 print(response)
-                                if str(response) == "<Response [200]>":
+                                if response.status_code == 200:
                                     self.dialog = Email_dialog(self)
                                     self.dialog.show()
                                     # closemes = QtWidgets.QMessageBox()
@@ -280,7 +284,7 @@ class Registration(QtWidgets.QWidget):
                                     # closemes.buttonClicked.connect(self.close)
                                     # closemes = closemes.exec_()
 
-                                elif str(response) == "<Response [403]>":
+                                elif response.status_code == 403:
                                     closemes = QtWidgets.QMessageBox()
                                     closemes.setWindowTitle("Ошибка")
                                     closemes.setText(
@@ -289,7 +293,7 @@ class Registration(QtWidgets.QWidget):
                                             closemes.close)
                                     closemes = closemes.exec_()
 
-                                elif str(response) == "<Response [550]>":
+                                elif response.status_code == 550:
                                     closemes = QtWidgets.QMessageBox()
                                     closemes.setWindowTitle("Ошибка")
                                     closemes.setText(
@@ -368,7 +372,7 @@ class Email_dialog(QtWidgets.QWidget):
                 response = post(f"{response_address}/email_verification", data={
                                 "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
 
-                if str(response) == "<Response [200]>":
+                if response.status_code == 200:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Успех")
                     closemes.setText(
@@ -377,7 +381,7 @@ class Email_dialog(QtWidgets.QWidget):
                             self.close)
                     closemes = closemes.exec_()
 
-                elif str(response) == "<Response [403]>":
+                elif response.status_code == 403:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
                     closemes.setText(
@@ -385,7 +389,8 @@ class Email_dialog(QtWidgets.QWidget):
                     closemes.buttonClicked.connect(
                             closemes.close)
                     closemes = closemes.exec_()
-            except:
+            except Exception as ex:
+                print(ex)
                 closemes = QtWidgets.QMessageBox.critical(
                     self, "Ошибка", "Ошибка подключения")
                 closemes.buttonClicked.connect(
@@ -405,7 +410,8 @@ class Check_contacts_dialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("HELLO!")
+        self.setWindowTitle("Запрос в друзья")
+        self.parent = parent
 
         QBtn = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
 
@@ -423,7 +429,5 @@ class Check_contacts_dialog(QtWidgets.QDialog):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(argv)
     myapp = MyWin()
-    myapp.show()
-    exit(app.exec_())
     myapp.show()
     exit(app.exec_())
