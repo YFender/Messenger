@@ -1,5 +1,7 @@
 import asyncio
 
+a = input()
+
 
 async def async_func(task_no, i):
     print(f'{task_no}: Запуск ...')

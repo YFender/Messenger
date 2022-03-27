@@ -76,7 +76,7 @@ class MyWin(QtWidgets.QMainWindow):
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
             closemes.setText("Ошибка подключения")
-            closemes.buttonClicked.connect(self.close)
+            closemes.buttonClicked.connect(closemes.close)
             closemes = closemes.exec_()
 
         self.ui.login_pushbutton.clicked.connect(self.login_def)
@@ -236,7 +236,7 @@ class Login(QtWidgets.QWidget):
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText("Ошибка подключения")
-                closemes.buttonClicked.connect(self.close)
+                closemes.buttonClicked.connect(closemes.close)
                 closemes = closemes.exec_()
         else:
             closemes = QtWidgets.QMessageBox()
