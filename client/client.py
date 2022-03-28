@@ -129,12 +129,13 @@ class Ui_Client_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         Client_MainWindow.setWindowTitle(_translate("Client_MainWindow", "MainWindow"))
         self.label_contacts.setText(_translate("Client_MainWindow", "Контакты"))
-        self.textBrowser_chat.setHtml(_translate("Client_MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
+        self.textBrowser_chat.setHtml(_translate("Client_MainWindow",
+                                                 "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+                                                 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                                 "p, li { white-space: pre-wrap; }\n"
+                                                 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+                                                 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
+                                                 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.pushButton_send_message.setText(_translate("Client_MainWindow", "Отправить сообщение"))
         self.pushButton_add_contact.setText(_translate("Client_MainWindow", "Добавить"))
         self.pushButton_delete_user.setText(_translate("Client_MainWindow", "Удалить"))
@@ -143,4 +144,5 @@ class Ui_Client_MainWindow(object):
         self.login_pushbutton.setText(_translate("Client_MainWindow", "Логин"))
         self.reg_pushbutton.setText(_translate("Client_MainWindow", "Регистрация"))
         self.pushButton_unlog.setText(_translate("Client_MainWindow", "Разлогиниться"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_settings), _translate("Client_MainWindow", "Подключение"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_settings),
+                                  _translate("Client_MainWindow", "Подключение"))

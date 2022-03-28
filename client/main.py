@@ -1,14 +1,16 @@
-from sys import argv, exit
-from PyQt5 import QtWidgets, QtCore
-from client import Ui_Client_MainWindow
-from login import Ui_Login
-from registration import Ui_Registration
+from os import path, remove
+from re import findall, match
 # from add_contact import Ui_Add_contact
 from sqlite3 import connect
-from os import path, remove
+from sys import argv, exit
+
+from PyQt5 import QtWidgets, QtCore
 from requests import post
+
+from client import Ui_Client_MainWindow
 from email_dialog import Ui_Dialog
-from re import findall, match
+from login import Ui_Login
+from registration import Ui_Registration
 
 response_address = "http://localhost:8080"
 
@@ -122,27 +124,27 @@ class MyWin(QtWidgets.QMainWindow):
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Успех")
                     closemes.setText(
-                            f"Запрос на добавление отправлен контакту {to_user}")
+                        f"Запрос на добавление отправлен контакту {to_user}")
                     closemes.buttonClicked.connect(
-                            self.close)
+                        self.close)
                     closemes = closemes.exec_()
 
                 elif response.status_code == 404:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
                     closemes.setText(
-                            f"Пользователя {to_user} не существует")
+                        f"Пользователя {to_user} не существует")
                     closemes.buttonClicked.connect(
-                            closemes.close)
+                        closemes.close)
                     closemes = closemes.exec_()
 
                 elif response.status_code == 403:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
                     closemes.setText(
-                            "Запрос уже был отправлен")
+                        "Запрос уже был отправлен")
                     closemes.buttonClicked.connect(
-                            closemes.close)
+                        closemes.close)
                     closemes = closemes.exec_()
             except Exception as ex:
                 print(ex)
@@ -267,11 +269,13 @@ class Registration(QtWidgets.QWidget):
             password_2 = self.ui.lineEdit_password_2.text()
             if email != "" and login != "" and password != "" and password_2 != "":
                 if password == password_2:
-                    if match('^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$', email) != None:
+                    if match(
+                            '^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$',
+                            email) != None:
                         if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', login):
                             if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', password):
                                 response = post(f"{response_address}/registration", data={
-                                                         "email": email, "login": login, "password": password})
+                                    "email": email, "login": login, "password": password})
                                 print(response)
                                 if response.status_code == 200:
                                     self.dialog = Email_dialog(self)
@@ -288,40 +292,40 @@ class Registration(QtWidgets.QWidget):
                                     closemes = QtWidgets.QMessageBox()
                                     closemes.setWindowTitle("Ошибка")
                                     closemes.setText(
-                                            "Пользователь с такими данными уже существует")
+                                        "Пользователь с такими данными уже существует")
                                     closemes.buttonClicked.connect(
-                                            closemes.close)
+                                        closemes.close)
                                     closemes = closemes.exec_()
 
                                 elif response.status_code == 550:
                                     closemes = QtWidgets.QMessageBox()
                                     closemes.setWindowTitle("Ошибка")
                                     closemes.setText(
-                                            "Такой электронной почты не существует")
+                                        "Такой электронной почты не существует")
                                     closemes.buttonClicked.connect(
-                                            closemes.close)
+                                        closemes.close)
                                     closemes = closemes.exec_()
 
                             else:
                                 closemes = QtWidgets.QMessageBox()
                                 closemes.setWindowTitle("Ошибка")
                                 closemes.setText(
-                                        "Пароль содержит запрещенные символы")
+                                    "Пароль содержит запрещенные символы")
                                 closemes.buttonClicked.connect(
-                                        closemes.close)
+                                    closemes.close)
                                 closemes = closemes.exec_()
                         else:
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Ошибка")
                             closemes.setText(
-                                    "Логин содержит запрещенные символы")
+                                "Логин содержит запрещенные символы")
                             closemes.buttonClicked.connect(closemes.close)
                             closemes = closemes.exec_()
                     else:
                         closemes = QtWidgets.QMessageBox()
                         closemes.setWindowTitle("Ошибка")
                         closemes.setText(
-                                "Адрес электронной почты имеет формат или/и содержит запрещенные символы")
+                            "Адрес электронной почты имеет формат или/и содержит запрещенные символы")
                         closemes.buttonClicked.connect(closemes.close)
                         closemes = closemes.exec_()
                 else:
@@ -370,31 +374,31 @@ class Email_dialog(QtWidgets.QWidget):
             try:
                 self.check_str = self.ui.lineEdit.text().upper()
                 response = post(f"{response_address}/email_verification", data={
-                                "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
+                    "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
 
                 if response.status_code == 200:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Успех")
                     closemes.setText(
-                            "Регистрация прошла успешно")
+                        "Регистрация прошла успешно")
                     closemes.buttonClicked.connect(
-                            self.close)
+                        self.close)
                     closemes = closemes.exec_()
 
                 elif response.status_code == 403:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
                     closemes.setText(
-                            "Проверьте правильность ввода кода подтверждения")
+                        "Проверьте правильность ввода кода подтверждения")
                     closemes.buttonClicked.connect(
-                            closemes.close)
+                        closemes.close)
                     closemes = closemes.exec_()
             except Exception as ex:
                 print(ex)
                 closemes = QtWidgets.QMessageBox.critical(
                     self, "Ошибка", "Ошибка подключения")
                 closemes.buttonClicked.connect(
-                        closemes.close)
+                    closemes.close)
                 closemes = closemes.exec_()
 
     def closeEvent(self, event):

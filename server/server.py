@@ -1,8 +1,9 @@
-from aiosqlite import connect
-from smtplib import SMTP_SSL
-from aiohttp import web
 from random import choice
+from smtplib import SMTP_SSL
 from string import ascii_uppercase, digits
+
+from aiohttp import web
+from aiosqlite import connect
 
 # пароль для ящика 1UYJ5rCiuKbqKJyFLGtB
 
@@ -69,17 +70,21 @@ class Server_http(web.View):
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
             if not await self.sql_request_users(request):
                 check_str = ''.join(
-                    [choice(ascii_uppercase + digits)for i in range(6)])
+                    [choice(ascii_uppercase + digits) for i in range(6)])
                 try:
                     email_server.sendmail(
-                        "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
+                        "yfen_python@mail.ru", email,
+                        f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode(
+                            "utf-8"))
                 except Exception as ex:
                     print("registration_error", ex)
                     try:
                         email_server.login(
                             "yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
                         email_server.sendmail(
-                            "yfen_python@mail.ru", email, f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode("utf-8"))
+                            "yfen_python@mail.ru", email,
+                            f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode(
+                                "utf-8"))
                     except Exception as ex:
                         print(ex, "registration_error")
                         return web.Response(status=550)
@@ -143,6 +148,7 @@ class Server_http(web.View):
             return web.Response(status=200, text="asdasd")
 
         """----------------------------------------sql запросы---------------------------------------"""
+
     async def sql_request_users(self, request):
         try:
             conn = await connect("./database.sqlite")

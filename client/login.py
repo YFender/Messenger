@@ -46,7 +46,8 @@ class Ui_Login(object):
         font.setPointSize(20)
         self.lineEdit_password.setFont(font)
         self.lineEdit_password.setAutoFillBackground(False)
-        self.lineEdit_password.setInputMethodHints(QtCore.Qt.ImhHiddenText|QtCore.Qt.ImhNoAutoUppercase|QtCore.Qt.ImhNoPredictiveText|QtCore.Qt.ImhSensitiveData)
+        self.lineEdit_password.setInputMethodHints(
+            QtCore.Qt.ImhHiddenText | QtCore.Qt.ImhNoAutoUppercase | QtCore.Qt.ImhNoPredictiveText | QtCore.Qt.ImhSensitiveData)
         self.lineEdit_password.setEchoMode(QtWidgets.QLineEdit.Password)
         self.lineEdit_password.setObjectName("lineEdit_password")
         self.verticalLayout.addWidget(self.lineEdit_password)

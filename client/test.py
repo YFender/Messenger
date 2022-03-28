@@ -14,6 +14,7 @@ async def main():
         "kick kick", 2), async_func("bi ba", 2))
     await async_func("i'm solo boy", 3)
 
+
 # if __name__ == "__main__":
 loop = asyncio.get_event_loop()
 a = loop.create_task(async_func("just run", 1))
