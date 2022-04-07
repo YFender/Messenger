@@ -100,7 +100,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.w3.show()
 
     def select_contact(self):
-        pass
+        print(self.ui.listWidget_contacts.currentItem())
 
     def unlog(self):
         remove("./user_log.sqlite")
@@ -114,40 +114,49 @@ class MyWin(QtWidgets.QMainWindow):
         text, ok = QtWidgets.QInputDialog.getText(
             self, 'Добавление контакта', 'Введите имя пользователя')
         if ok and text != "":
-            try:
-                from_user = self.login.lower()
-                to_user = text.lower()
-                data = {"from_user": from_user, "to_user": to_user}
-                response = post(
-                    f"{response_address}/friendship_request", data=data)
-                if response.status_code == 200:
-                    closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Успех")
-                    closemes.setText(
-                        f"Запрос на добавление отправлен контакту {to_user}")
-                    closemes.buttonClicked.connect(
-                        self.close)
-                    closemes = closemes.exec_()
+            if text != self.login:
+                try:
+                    from_user = self.login.lower()
+                    to_user = text.lower()
+                    data = {"from_user": from_user, "to_user": to_user}
+                    response = post(
+                        f"{response_address}/friendship_request", data=data)
+                    if response.status_code == 200:
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Успех")
+                        closemes.setText(
+                            f"Запрос на добавление отправлен контакту {to_user}")
+                        closemes.buttonClicked.connect(
+                            closemes.close)
+                        closemes = closemes.exec_()
 
-                elif response.status_code == 404:
-                    closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Ошибка")
-                    closemes.setText(
-                        f"Пользователя {to_user} не существует")
-                    closemes.buttonClicked.connect(
-                        closemes.close)
-                    closemes = closemes.exec_()
+                    elif response.status_code == 404:
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Ошибка")
+                        closemes.setText(
+                            f"Пользователя {to_user} не существует")
+                        closemes.buttonClicked.connect(
+                            closemes.close)
+                        closemes = closemes.exec_()
 
-                elif response.status_code == 403:
-                    closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Ошибка")
-                    closemes.setText(
-                        "Запрос уже был отправлен")
-                    closemes.buttonClicked.connect(
-                        closemes.close)
-                    closemes = closemes.exec_()
-            except Exception as ex:
-                print(ex)
+                    elif response.status_code == 403:
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Ошибка")
+                        closemes.setText(
+                            "Запрос уже был отправлен")
+                        closemes.buttonClicked.connect(
+                            closemes.close)
+                        closemes = closemes.exec_()
+                except Exception as ex:
+                    print(ex)
+            else:
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Ошибка")
+                closemes.setText(
+                    "Вы не можете отправить запро самому себе")
+                closemes.buttonClicked.connect(
+                    closemes.close)
+                closemes = closemes.exec_()
 
         # self.w4 = Add_contact(self)
         # self.w4.show()

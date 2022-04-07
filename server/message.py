@@ -1,14 +1,8 @@
-
+import argparse
 import ssl
+import sys
 import urllib
 from http.server import HTTPServer, BaseHTTPRequestHandler
-
-import cgi
-
-
-import sys
-
-import argparse
 
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):

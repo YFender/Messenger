@@ -55,7 +55,6 @@ class Server_http(web.View):
         try:
 
             request = f'SELECT * FROM Users WHERE Login = "{login}" AND Password = "{password}" '
-
             if not await self.sql_request_users(request):
                 return web.Response(status=404)
             else:
@@ -70,7 +69,7 @@ class Server_http(web.View):
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
             if not await self.sql_request_users(request):
                 check_str = ''.join(
-                    [choice(ascii_uppercase + digits) for i in range(6)])
+                    [choice(ascii_uppercase + digits) for _ in range(6)])
                 try:
                     email_server.sendmail(
                         "yfen_python@mail.ru", email,
@@ -95,7 +94,7 @@ class Server_http(web.View):
                 return web.Response(status=200)
             else:
                 return web.Response(status=403)
-            email_server.close()
+            # email_server.close()
 
         except Exception as ex:
             print(ex, "registration_error")
@@ -118,6 +117,10 @@ class Server_http(web.View):
             return web.Response(status=500)
 
     async def message_def(self, data):
+        from_user = data["from_user"]
+        to_user = data["to_user"]
+        message_text = data["message_text"]
+        request = f'INSERT INTO Messages VALUES(Null, "{from_user}", "{to_user}", "{message_text}")'
         return web.Response(status=200)
 
     async def email_verification_delete(self, email, login):
@@ -142,7 +145,8 @@ class Server_http(web.View):
 
     async def friendship_request_check(self, login):
         request = f'SELECT * FROM Friendship_requests WHERE To_user = "{login}"'
-        if not self.sql_request_users(request):
+        # print(await self.sql_request_users(request))
+        if not await self.sql_request_users(request):
             return web.Response(status=404, text="asdasdasd")
         else:
             return web.Response(status=200, text="asdasd")
