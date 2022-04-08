@@ -1,11 +1,13 @@
-from PyQt5 import QtWidgets
+from aiohttp import web
 
-closemes = QtWidgets.QMessageBox()
-lineEdit_check = QtWidgets.QLineEdit(
-    closemes)
-closemes.addItem()
-closemes.setWindowTitle("Успех")
-closemes.setText(
-    "На ваш Email пришел код")
-closemes.buttonClicked.connect(lambda: print("asdasd"))
-# closemes = closemes.exec_()
+
+class Server(web.View):
+
+    async def post(self):
+        return web.Response(text="asd")
+
+
+if __name__ == "__main__":
+    app = web.Application()
+    app.router.add_view('', Server)
+    web.run_app(app, port=8080)

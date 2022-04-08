@@ -153,7 +153,7 @@ class MyWin(QtWidgets.QMainWindow):
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText(
-                    "Вы не можете отправить запро самому себе")
+                    "Вы не можете отправить запроc самому себе")
                 closemes.buttonClicked.connect(
                     closemes.close)
                 closemes = closemes.exec_()
@@ -167,7 +167,7 @@ class MyWin(QtWidgets.QMainWindow):
                 f"{response_address}/friendship_requests_check", data={"login": self.login})
             print(response)
             if response.status_code == 200:
-                self.w7 = Check_contacts_dialog(self)
+                self.w7 = Check_contacts_dialog(self, response.text)
                 self.w7.show()
             else:
                 self.timer.stop()
@@ -365,6 +365,7 @@ class Registration(QtWidgets.QWidget):
 class Email_dialog(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Email_dialog, self).__init__()
+
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.parent = parent
@@ -420,23 +421,40 @@ class Email_dialog(QtWidgets.QWidget):
 
 
 class Check_contacts_dialog(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, from_user=None):
         super().__init__(parent)
 
         self.setWindowTitle("Запрос в друзья")
         self.parent = parent
+        self.from_user = from_user
 
         QBtn = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
 
         self.buttonBox = QtWidgets.QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-
         self.layout = QtWidgets.QVBoxLayout()
-        message = QtWidgets.QLabel("Something happened, is that OK?")
+        message = QtWidgets.QLabel(f"Запрос в друзья от {self.from_user}")
         self.layout.addWidget(message)
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
+
+    def accept(self) -> None:
+        response = post(f"{response_address}/friendship_requests_check_yes",
+                        data={"to_login": self.parent.login, "from_login": self.from_user})
+        if response.status_code == 200:
+            pass
+            self.hide()
+        else:
+            closemes = QtWidgets.QMessageBox()
+            closemes.setWindowTitle("Ошибка")
+            closemes.setText("Неизвестная ошибка")
+            closemes.buttonClicked.connect(self.hide)
+            closemes = closemes.exec_()
+
+    def reject(self) -> None:
+        response = post(f"{response_address}/friendship_requests_check_no")
+        self.hide()
 
 
 if __name__ == "__main__":

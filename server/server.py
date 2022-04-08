@@ -43,6 +43,8 @@ class Server_http(web.View):
             elif path == "friendship_requests_check":
                 return await self.friendship_request_check(data["login"])
                 # return web.Response(status=404)
+            elif path == "friendship_requests_check_yes":
+                return await self.friendship_request_check_yes(data["to_login"], data["from_login"])
 
             else:
                 return web.Response(status=404)
@@ -147,9 +149,26 @@ class Server_http(web.View):
         request = f'SELECT * FROM Friendship_requests WHERE To_user = "{login}"'
         # print(await self.sql_request_users(request))
         if not await self.sql_request_users(request):
-            return web.Response(status=404, text="asdasdasd")
+            return web.Response(status=404)
         else:
-            return web.Response(status=200, text="asdasd")
+            from_user = await self.sql_request_users(request)
+            print(from_user)
+            return web.Response(status=200, text=f"{from_user[1]}")
+
+    async def friendship_request_check_yes(self, to_login):
+        request = f'SELECT * FROM Friendship_requests WHERE To_user = "{to_login}"'
+        data = await self.sql_request_users(request)
+
+        request = f'INSERT INTO Friends VALUES(Null, "{data[1]}", "{data[2]}")'
+        await  self.sql_request_users(request)
+
+        request = f'DELETE FROM Friendship_requests WHERE To_user = "{data[2]}" AND From_user = "{data[1]}"'
+        await self.sql_request_users(request)
+
+        return web.Response(status=200, )
+
+    async def friendship_request_check_no(self):
+        pass
 
         """----------------------------------------sql запросы---------------------------------------"""
 
