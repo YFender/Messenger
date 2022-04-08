@@ -46,6 +46,9 @@ class Server_http(web.View):
             elif path == "friendship_requests_check_yes":
                 return await self.friendship_request_check_yes(data["to_login"], data["from_login"])
 
+            elif path == "friendship_requests_check_no":
+                return await self.friendship_request_check_no(data["to_login"], data["from_login"])
+
             else:
                 return web.Response(status=404)
 
@@ -155,22 +158,25 @@ class Server_http(web.View):
             print(from_user)
             return web.Response(status=200, text=f"{from_user[1]}")
 
-    async def friendship_request_check_yes(self, to_login):
-        request = f'SELECT * FROM Friendship_requests WHERE To_user = "{to_login}"'
-        data = await self.sql_request_users(request)
+    async def friendship_request_check_yes(self, to_login, from_login):
+        request = f'SELECT * FROM Friendship_requests WHERE To_user = "{to_login} AND From_user = {from_login}"'
+        if await self.sql_request_users(request):
+            request = f'INSERT INTO Friends VALUES(Null, "{from_login}", "{to_login}")'
+            await self.sql_request_users(request)
 
-        request = f'INSERT INTO Friends VALUES(Null, "{data[1]}", "{data[2]}")'
-        await  self.sql_request_users(request)
+            request = f'DELETE FROM Friendship_requests WHERE To_user = "{to_login}" AND From_user = "{from_login}"'
+            await self.sql_request_users(request)
 
-        request = f'DELETE FROM Friendship_requests WHERE To_user = "{data[2]}" AND From_user = "{data[1]}"'
+            return web.Response(status=200)
+        else:
+            return web.Response(status=404)
+
+    async def friendship_request_check_no(self, to_login, from_login):
+        request = f'DELETE FROM Friendship_requests WHERE To_user = "{to_login}" AND From_user = "{from_login}"'
         await self.sql_request_users(request)
+        return web.Response(status=200)
 
-        return web.Response(status=200, )
-
-    async def friendship_request_check_no(self):
-        pass
-
-        """----------------------------------------sql запросы---------------------------------------"""
+    """----------------------------------------sql запросы---------------------------------------"""
 
     async def sql_request_users(self, request):
         try:
