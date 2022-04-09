@@ -52,6 +52,9 @@ class Server_http(web.View):
             elif path == "friends_check":
                 return await self.friends_check(data["login"])
 
+            elif path == "delete_friend":
+                return await self.delete_friend(data["from_login"], data["delete_login"])
+
             else:
                 return web.Response(status=404)
 
@@ -190,10 +193,22 @@ class Server_http(web.View):
         result = await cursor.fetchall()
         await cursor.close()
         await conn.close()
+        a = str()
         if result:
-            return web.Response(status=200, body=result)
+            for i in result:
+                if i[1] == login:
+                    a += str(i[2] + " ")
+                elif i[2] == login:
+                    a += str(i[1] + " ")
+
+            return web.Response(status=200, text=a.strip())
         else:
             return web.Response(status=404)
+
+    async def delete_friend(self, from_login, delete_login):
+        request = f'DELETE FROM Friends WHERE User_1 = "{from_login}" AND User_2 = "{delete_login}" OR User_1 = "{delete_login}" AND User_2 = "{from_login}"'
+        await self.sql_request_users(request)
+        return web.Response(status=200)
 
     """----------------------------------------sql запросы---------------------------------------"""
 

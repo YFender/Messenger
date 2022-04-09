@@ -69,6 +69,7 @@ class MyWin(QtWidgets.QMainWindow):
                     remove("./user_log.sqlite")
 
                 self.check_new_contacts()
+                self.check_old_contacts()
 
         except Exception as ex:
             print(ex)
@@ -85,8 +86,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_delete_user.setEnabled(False)
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
         self.ui.pushButton_add_contact.clicked.connect(self.add_contact)
-
-        self.check_old_contacts()
+        self.ui.pushButton_delete_user.clicked.connect(self.delete_contact)
 
     def login_def(self):
         self.w2 = Login(self)
@@ -97,7 +97,8 @@ class MyWin(QtWidgets.QMainWindow):
         self.w3.show()
 
     def select_contact(self):
-        print(self.ui.listWidget_contacts.currentItem())
+        print(self.ui.listWidget_contacts.currentItem().text())
+        self.ui.pushButton_delete_user.setEnabled(True)
 
     def unlog(self):
         remove("./user_log.sqlite")
@@ -174,8 +175,16 @@ class MyWin(QtWidgets.QMainWindow):
         response = post(f"{response_address}/friends_check", data={"login": self.login})
         print(response)
         if response.status_code == 200:
-            print("asdasd")
-            print(response.content)
+            # print("asdasd")
+            print(response.text)
+            for i in response.text.split(" "):
+                self.ui.listWidget_contacts.addItem(i)
+
+    def delete_contact(self):
+        self.w8 = Delete_contact_dialog(self)
+        self.w8.show()
+        # response = post(f"{response_address}/delete_friend",
+        #                 data={"delete_login": self.ui.listWidget_contacts.currentItem().text()})
 
 
 class Login(QtWidgets.QWidget):
@@ -223,6 +232,7 @@ class Login(QtWidgets.QWidget):
                             self.parent.login = login
 
                             self.parent.check_new_contacts()
+                            self.parent.check_old_contacts()
 
                         if response.status_code == 404:
                             closemes = QtWidgets.QMessageBox()
@@ -464,6 +474,44 @@ class Check_contacts_dialog(QtWidgets.QDialog):
         response = post(f"{response_address}/friendship_requests_check_no")
         self.hide()
         self.parent.check_new_contacts()
+
+
+class Delete_contact_dialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Подтвердите действие")
+        self.parent = parent
+
+        QBtn = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
+
+        self.buttonBox = QtWidgets.QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.layout = QtWidgets.QVBoxLayout()
+        message = QtWidgets.QLabel(
+            f"Вы действительно хотите удалить контакт {self.parent.ui.listWidget_contacts.currentItem().text()}?")
+        self.layout.addWidget(message)
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    def accept(self) -> None:
+        try:
+            response = post(f"{response_address}/delete_friend",
+                            data={"from_login": self.parent.login,
+                                  "delete_login": self.parent.ui.listWidget_contacts.currentItem().text()})
+            if response.status_code == 200:
+                self.hide()
+                self.parent.ui.listWidget_contacts.clear()
+                self.parent.check_old_contacts()
+            else:
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Ошибка")
+                closemes.setText("Неизвестная ошибка")
+                closemes.buttonClicked.connect(self.hide)
+                closemes = closemes.exec_()
+        except Exception as ex:
+            print(ex)
 
 
 if __name__ == "__main__":
