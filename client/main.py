@@ -4,7 +4,7 @@ from re import findall, match
 from sqlite3 import connect
 from sys import argv, exit
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 from requests import post
 
 from client import Ui_Client_MainWindow
@@ -25,9 +25,6 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.label_unlog.hide()
         self.ui.pushButton_unlog.hide()
         self.ui.tab_chat.setEnabled(False)
-
-        self.timer = QtCore.QTimer()
-        # self.timer.timeout.connect(self.check_contacts)
 
         try:
             if not path.isfile("./user_log.sqlite"):
@@ -71,7 +68,7 @@ class MyWin(QtWidgets.QMainWindow):
                     closemes = closemes.exec_()
                     remove("./user_log.sqlite")
 
-                self.timer.start(0)
+                self.check_new_contacts()
 
         except Exception as ex:
             print(ex)
@@ -89,7 +86,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
         self.ui.pushButton_add_contact.clicked.connect(self.add_contact)
 
-        self.check_contacts()
+        self.check_old_contacts()
 
     def login_def(self):
         self.w2 = Login(self)
@@ -139,11 +136,11 @@ class MyWin(QtWidgets.QMainWindow):
                             closemes.close)
                         closemes = closemes.exec_()
 
-                    elif response.status_code == 403:
+                    elif response.status_code == 406:
                         closemes = QtWidgets.QMessageBox()
                         closemes.setWindowTitle("Ошибка")
                         closemes.setText(
-                            "Запрос уже был отправлен")
+                            "Запрос уже был отправлен или пользователь уже в друзьях")
                         closemes.buttonClicked.connect(
                             closemes.close)
                         closemes = closemes.exec_()
@@ -161,19 +158,24 @@ class MyWin(QtWidgets.QMainWindow):
         # self.w4 = Add_contact(self)
         # self.w4.show()
 
-    def check_contacts(self):
+    def check_new_contacts(self):
         try:
             response = post(
                 f"{response_address}/friendship_requests_check", data={"login": self.login})
-            print(response)
+            # print(response)
             if response.status_code == 200:
                 self.w7 = Check_contacts_dialog(self, response.text)
                 self.w7.show()
-            else:
-                self.timer.stop()
+
         except Exception as ex:
             print(ex)
-            self.timer.stop()
+
+    def check_old_contacts(self):
+        response = post(f"{response_address}/friends_check", data={"login": self.login})
+        print(response)
+        if response.status_code == 200:
+            print("asdasd")
+            print(response.content)
 
 
 class Login(QtWidgets.QWidget):
@@ -220,7 +222,7 @@ class Login(QtWidgets.QWidget):
                             self.parent.ui.pushButton_unlog.show()
                             self.parent.login = login
 
-                            self.parent.timer.start(0)
+                            self.parent.check_new_contacts()
 
                         if response.status_code == 404:
                             closemes = QtWidgets.QMessageBox()
@@ -440,21 +442,28 @@ class Check_contacts_dialog(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
     def accept(self) -> None:
-        response = post(f"{response_address}/friendship_requests_check_yes",
-                        data={"to_login": self.parent.login, "from_login": self.from_user})
-        if response.status_code == 200:
-            pass
-            self.hide()
-        else:
-            closemes = QtWidgets.QMessageBox()
-            closemes.setWindowTitle("Ошибка")
-            closemes.setText("Неизвестная ошибка")
-            closemes.buttonClicked.connect(self.hide)
-            closemes = closemes.exec_()
+        try:
+            response = post(f"{response_address}/friendship_requests_check_yes",
+                            data={"to_login": self.parent.login, "from_login": self.from_user})
+            print(response.status_code)
+            if response.status_code == 200:
+                pass
+                self.hide()
+                self.parent.check_new_contacts()
+            else:
+                print(response.status_code)
+                closemes = QtWidgets.QMessageBox()
+                closemes.setWindowTitle("Ошибка")
+                closemes.setText("Неизвестная ошибка")
+                closemes.buttonClicked.connect(closemes.hide)
+                closemes = closemes.exec_()
+        except Exception as ex:
+            print(ex)
 
     def reject(self) -> None:
         response = post(f"{response_address}/friendship_requests_check_no")
         self.hide()
+        self.parent.check_new_contacts()
 
 
 if __name__ == "__main__":

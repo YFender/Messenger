@@ -41,13 +41,16 @@ class Server_http(web.View):
                 return await self.friendship_request(data["from_user"], data["to_user"])
 
             elif path == "friendship_requests_check":
-                return await self.friendship_request_check(data["login"])
+                return await self.friendship_requests_check(data["login"])
                 # return web.Response(status=404)
             elif path == "friendship_requests_check_yes":
-                return await self.friendship_request_check_yes(data["to_login"], data["from_login"])
+                return await self.friendship_requests_check_yes(data["to_login"], data["from_login"])
 
             elif path == "friendship_requests_check_no":
-                return await self.friendship_request_check_no(data["to_login"], data["from_login"])
+                return await self.friendship_requests_check_no(data["to_login"], data["from_login"])
+
+            elif path == "friends_check":
+                return await self.friends_check(data["login"])
 
             else:
                 return web.Response(status=404)
@@ -135,20 +138,23 @@ class Server_http(web.View):
         return web.Response(status=200)
 
     async def friendship_request(self, from_user, to_user):
-
-        request = f'SELECT * FROM USERS WHERE Login = "{to_user}"'
+        request = f'SELECT * FROM Friends WHERE User_1 = "{from_user}" AND User_2 = "{to_user}" OR User_1 = "{to_user}" AND User_2 = "{from_user}"'
         if not await self.sql_request_users(request):
-            return web.Response(status=404)
-        else:
-            request = f'SELECT * FROM Friendship_requests WHERE From_user = "{from_user}" AND To_user = "{to_user}"'
+            request = f'SELECT * FROM Users WHERE Login = "{to_user}"'
             if not await self.sql_request_users(request):
-                request = f'INSERT INTO Friendship_requests VALUES(Null, "{from_user}", "{to_user}")'
-                await self.sql_request_users(request)
-                return web.Response(status=200)
+                return web.Response(status=404)
             else:
-                return web.Response(status=403)
+                request = f'SELECT * FROM Friendship_requests WHERE From_user = "{from_user}" AND To_user = "{to_user}" OR From_user = "{to_user}" AND To_user = "{from_user}"'
+                if not await self.sql_request_users(request):
+                    request = f'INSERT INTO Friendship_requests VALUES(Null, "{from_user}", "{to_user}")'
+                    await self.sql_request_users(request)
+                    return web.Response(status=200)
+                else:
+                    return web.Response(status=406)
+        else:
+            return web.Response(status=406)
 
-    async def friendship_request_check(self, login):
+    async def friendship_requests_check(self, login):
         request = f'SELECT * FROM Friendship_requests WHERE To_user = "{login}"'
         # print(await self.sql_request_users(request))
         if not await self.sql_request_users(request):
@@ -158,9 +164,12 @@ class Server_http(web.View):
             print(from_user)
             return web.Response(status=200, text=f"{from_user[1]}")
 
-    async def friendship_request_check_yes(self, to_login, from_login):
-        request = f'SELECT * FROM Friendship_requests WHERE To_user = "{to_login} AND From_user = {from_login}"'
-        if await self.sql_request_users(request):
+    async def friendship_requests_check_yes(self, to_login, from_login):
+        request = f'SELECT * FROM Friendship_requests WHERE To_user = "{to_login}" AND From_user = "{from_login}"'
+        # print(from_login, to_login)
+        if not await self.sql_request_users(request):
+            return web.Response(status=404)
+        else:
             request = f'INSERT INTO Friends VALUES(Null, "{from_login}", "{to_login}")'
             await self.sql_request_users(request)
 
@@ -168,13 +177,23 @@ class Server_http(web.View):
             await self.sql_request_users(request)
 
             return web.Response(status=200)
-        else:
-            return web.Response(status=404)
 
-    async def friendship_request_check_no(self, to_login, from_login):
+    async def friendship_requests_check_no(self, to_login, from_login):
         request = f'DELETE FROM Friendship_requests WHERE To_user = "{to_login}" AND From_user = "{from_login}"'
         await self.sql_request_users(request)
         return web.Response(status=200)
+
+    async def friends_check(self, login):
+        request = f'SELECT * FROM Friends WHERE User_1 = "{login}" OR User_2 = "{login}"'
+        conn = await connect("./database.sqlite")
+        cursor = await conn.execute(request)
+        result = await cursor.fetchall()
+        await cursor.close()
+        await conn.close()
+        if result:
+            return web.Response(status=200, body=result)
+        else:
+            return web.Response(status=404)
 
     """----------------------------------------sql запросы---------------------------------------"""
 
