@@ -4,7 +4,7 @@ from re import findall, match
 from sqlite3 import connect
 from sys import argv, exit
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from requests import post
 
 from client import Ui_Client_MainWindow
@@ -25,6 +25,8 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.label_unlog.hide()
         self.ui.pushButton_unlog.hide()
         self.ui.tab_chat.setEnabled(False)
+
+        self.timer = QtCore.QTimer()
 
         try:
             if not path.isfile("./user_log.sqlite"):
@@ -163,10 +165,12 @@ class MyWin(QtWidgets.QMainWindow):
         try:
             response = post(
                 f"{response_address}/friendship_requests_check", data={"login": self.login})
-            # print(response)
+            print(response)
             if response.status_code == 200:
                 self.w7 = Check_contacts_dialog(self, response.text)
                 self.w7.show()
+            else:
+                self.timer.singleShot(5000, self.check_new_contacts)
 
         except Exception as ex:
             print(ex)
