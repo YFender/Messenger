@@ -54,7 +54,7 @@ class MyWin(QtWidgets.QMainWindow):
                 conn = connect("user_log.sqlite")
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT Login, Password FROM User_log WHERE UserId = 1")
+                    "SELECT Login, Password FROM User_log")
                 result = cursor.fetchone()
                 if result:
                     self.login, self.password = result[0], result[1]
@@ -115,12 +115,19 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_delete_user.setEnabled(True)
 
     def unlog(self):
-        remove("./user_log.sqlite")
-        closemes = QtWidgets.QMessageBox()
-        closemes.setWindowTitle("Внимание")
-        closemes.setText("Приложение будет перезапущено")
-        closemes.buttonClicked.connect(self.close)
-        closemes = closemes.exec_()
+        try:
+            conn = connect("./user_log.sqlite")
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM User_log')
+            conn.commit()
+            conn.close()
+            closemes = QtWidgets.QMessageBox()
+            closemes.setWindowTitle("Внимание")
+            closemes.setText("Приложение будет перезапущено")
+            closemes.buttonClicked.connect(self.close)
+            closemes = closemes.exec_()
+        except Exception as ex:
+            print(ex, "unlog_error")
 
     def add_contact(self):
         text, ok = QtWidgets.QInputDialog.getText(
@@ -209,10 +216,10 @@ class Login(QtWidgets.QWidget):
         self.ui.setupUi(self)
         self.parent = parent
 
-        self.ui.pushButton_authorize.clicked.connect(self.login)
+        self.ui.pushButton_authorize.clicked.connect(self.login_def)
 
-    def login(self):
-        if self.ui.lineEdit_login.text() != "" and self.ui.lineEdit_password.text() != "":
+    def login_def(self):
+        if self.ui.lineEdit_login.text().strip() != "" and self.ui.lineEdit_password.text().strip() != "":
             try:
                 login = self.ui.lineEdit_login.text().lower()
                 if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', login):
@@ -230,7 +237,9 @@ class Login(QtWidgets.QWidget):
 
                             conn = connect("user_log.sqlite")
                             cursor = conn.cursor()
-                            cursor.execute(f'INSERT INTO User_log VALUES (Null, "{login}", "{password}")')
+                            cursor.execute(
+                                f'INSERT INTO User_log(Login, Password) default VALUES("{login}", "{password}")'.replace(
+                                    "default", ""))
                             conn.commit()
                             conn.close()
 
@@ -267,7 +276,7 @@ class Login(QtWidgets.QWidget):
                     closemes = closemes.exec_()
 
             except Exception as ex:
-                print(ex)
+                print(ex, "login_error")
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText("Ошибка подключения")
@@ -380,7 +389,7 @@ class Registration(QtWidgets.QWidget):
         try:
             self.parent.login = self.login
             self.parent.password = self.password
-            # self.parent.login_def()
+            self.parent.auto_login_def()
         except Exception as ex:
             print(ex, "close_event error")
 
