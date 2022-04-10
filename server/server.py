@@ -5,10 +5,8 @@ from string import ascii_uppercase, digits
 from aiohttp import web
 from aiosqlite import connect
 
-# пароль для ящика 1UYJ5rCiuKbqKJyFLGtB
 
-email_server = SMTP_SSL("smtp.mail.ru", 465)
-email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
+# пароль для ящика 1UYJ5rCiuKbqKJyFLGtB
 
 
 class Server_http(web.View):
@@ -79,25 +77,13 @@ class Server_http(web.View):
         try:
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
             if not await self.sql_request_users(request):
-                check_str = ''.join(
-                    [choice(ascii_uppercase + digits) for _ in range(6)])
-                try:
-                    email_server.sendmail(
-                        "yfen_python@mail.ru", email,
-                        f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode(
-                            "utf-8"))
-                except Exception as ex:
-                    print("registration_error", ex)
-                    try:
-                        email_server.login(
-                            "yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
-                        email_server.sendmail(
-                            "yfen_python@mail.ru", email,
-                            f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode(
-                                "utf-8"))
-                    except Exception as ex:
-                        print(ex, "registration_error")
-                        return web.Response(status=550)
+                check_str = ''.join([choice(ascii_uppercase + digits) for _ in range(6)])
+
+                email_server = SMTP_SSL("smtp.mail.ru", 465)
+                email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
+                email_server.sendmail("yfen_python@mail.ru", email,
+                                      f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode(
+                                          "utf-8"))
 
                 request = f'INSERT INTO Verification VALUES(Null, "{email}", "{login}", "{password}","{check_str}")'
                 await self.sql_request_users(request)
@@ -109,7 +95,7 @@ class Server_http(web.View):
 
         except Exception as ex:
             print(ex, "registration_error")
-            return web.Response(status=500)
+            return web.Response(status=550)
 
     async def verification(self, email, login, password, check_str):
         try:

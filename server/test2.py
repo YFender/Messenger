@@ -1,3 +1,5 @@
-import requests
+from smtplib import SMTP_SSL
 
-print(requests.post("http://localhost:8080").text)
+email_server = SMTP_SSL("smtp.mail.ru", 465)
+email_server.sendmail()
+print(email_server.)

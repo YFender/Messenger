@@ -28,59 +28,6 @@ class MyWin(QtWidgets.QMainWindow):
 
         self.timer = QtCore.QTimer()
 
-        try:
-            if not path.isfile("./user_log.sqlite"):
-                self.ui.tabWidget.setCurrentIndex(1)
-                self.ui.tab_chat.setEnabled(False)
-            else:
-                conn = connect("user_log.sqlite")
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT Login, Password FROM User_log WHERE UserId = 1")
-                result = cursor.fetchone()
-                self.login, self.password = result[0], result[1]
-                result = {"login": self.login, "password": self.password}
-                print(result)
-                conn.close()
-
-                response_login = post(
-                    f"{response_address}/login", data=result)
-
-                if response_login.status_code == 200:
-                    closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Успех")
-                    closemes.setText("Подключение установлено")
-                    closemes.buttonClicked.connect(self.close)
-                    closemes = closemes.exec_()
-
-                    self.ui.tab_chat.setEnabled(True)
-                    self.ui.login_pushbutton.hide()
-                    self.ui.reg_pushbutton.hide()
-                    self.ui.label_unlog.setText(
-                        f"Авторизован как {self.login}")
-                    self.ui.tabWidget.setCurrentIndex(0)
-                    self.ui.label_unlog.show()
-                    self.ui.pushButton_unlog.show()
-
-                elif response_login.status_code == 404:
-                    closemes = QtWidgets.QMessageBox()
-                    closemes.setWindowTitle("Ошибка")
-                    closemes.setText("Проверьте правильность логина/пароля")
-                    closemes.buttonClicked.connect(self.close)
-                    closemes = closemes.exec_()
-                    remove("./user_log.sqlite")
-
-                self.check_new_contacts()
-                self.check_old_contacts()
-
-        except Exception as ex:
-            print(ex)
-            closemes = QtWidgets.QMessageBox()
-            closemes.setWindowTitle("Ошибка")
-            closemes.setText("Ошибка подключения")
-            closemes.buttonClicked.connect(closemes.close)
-            closemes = closemes.exec_()
-
         self.ui.login_pushbutton.clicked.connect(self.login_def)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
         self.ui.pushButton_unlog.clicked.connect(self.unlog)
@@ -89,6 +36,71 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
         self.ui.pushButton_add_contact.clicked.connect(self.add_contact)
         self.ui.pushButton_delete_user.clicked.connect(self.delete_contact)
+
+        self.auto_login_def()
+
+    def auto_login_def(self):
+        try:
+            if not path.isfile("./user_log.sqlite"):
+                self.ui.tabWidget.setCurrentIndex(1)
+                self.ui.tab_chat.setEnabled(False)
+                conn = connect("user_log.sqlite")
+                cursor = conn.cursor()
+                cursor.execute(
+                    "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
+                conn.commit()
+                conn.close()
+            else:
+                conn = connect("user_log.sqlite")
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT Login, Password FROM User_log WHERE UserId = 1")
+                result = cursor.fetchone()
+                if result:
+                    self.login, self.password = result[0], result[1]
+                    result = {"login": self.login, "password": self.password}
+                    print(result)
+                    response_login = post(
+                        f"{response_address}/login", data=result)
+
+                    if response_login.status_code == 200:
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Успех")
+                        closemes.setText("Подключение установлено")
+                        closemes.buttonClicked.connect(self.close)
+                        closemes = closemes.exec_()
+
+                        self.ui.tab_chat.setEnabled(True)
+                        self.ui.login_pushbutton.hide()
+                        self.ui.reg_pushbutton.hide()
+                        self.ui.label_unlog.setText(
+                            f"Авторизован как {self.login}")
+                        self.ui.tabWidget.setCurrentIndex(0)
+                        self.ui.label_unlog.show()
+                        self.ui.pushButton_unlog.show()
+
+                    elif response_login.status_code == 404:
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Ошибка")
+                        closemes.setText("Проверьте правильность логина/пароля")
+                        closemes.buttonClicked.connect(self.close)
+                        closemes = closemes.exec_()
+                        remove("./user_log.sqlite")
+
+                    self.check_new_contacts()
+                    self.check_old_contacts()
+                else:
+                    self.ui.tabWidget.setCurrentIndex(1)
+                    self.ui.tab_chat.setEnabled(False)
+                conn.close()
+
+        except Exception as ex:
+            print(ex)
+            closemes = QtWidgets.QMessageBox()
+            closemes.setWindowTitle("Ошибка")
+            closemes.setText("Ошибка подключения")
+            closemes.buttonClicked.connect(closemes.close)
+            closemes = closemes.exec_()
 
     def login_def(self):
         self.w2 = Login(self)
@@ -176,6 +188,7 @@ class MyWin(QtWidgets.QMainWindow):
             print(ex)
 
     def check_old_contacts(self):
+        self.ui.listWidget_contacts.clear()
         response = post(f"{response_address}/friends_check", data={"login": self.login})
         print(response)
         if response.status_code == 200:
@@ -187,8 +200,6 @@ class MyWin(QtWidgets.QMainWindow):
     def delete_contact(self):
         self.w8 = Delete_contact_dialog(self)
         self.w8.show()
-        # response = post(f"{response_address}/delete_friend",
-        #                 data={"delete_login": self.ui.listWidget_contacts.currentItem().text()})
 
 
 class Login(QtWidgets.QWidget):
@@ -219,10 +230,7 @@ class Login(QtWidgets.QWidget):
 
                             conn = connect("user_log.sqlite")
                             cursor = conn.cursor()
-                            cursor.execute(
-                                "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
-                            cursor.execute(
-                                f'INSERT INTO User_log VALUES (Null, "{login}", "{password}")')
+                            cursor.execute(f'INSERT INTO User_log VALUES (Null, "{login}", "{password}")')
                             conn.commit()
                             conn.close()
 
@@ -289,29 +297,22 @@ class Registration(QtWidgets.QWidget):
     def registration(self):
         try:
             email = self.ui.lineEdit_email.text().lower()
-            login = self.ui.lineEdit_login.text().lower()
-            password = self.ui.lineEdit_password.text()
+            self.login = self.ui.lineEdit_login.text().lower()
+            self.password = self.ui.lineEdit_password.text()
             password_2 = self.ui.lineEdit_password_2.text()
-            if email != "" and login != "" and password != "" and password_2 != "":
-                if password == password_2:
+            if email != "" and self.login != "" and self.password != "" and password_2 != "":
+                if self.password == password_2:
                     if match(
                             '^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$',
                             email) != None:
-                        if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', login):
-                            if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', password):
+                        if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', self.login):
+                            if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', self.password):
                                 response = post(f"{response_address}/registration", data={
-                                    "email": email, "login": login, "password": password})
+                                    "email": email, "login": self.login, "password": self.password})
                                 print(response)
                                 if response.status_code == 200:
                                     self.dialog = Email_dialog(self)
                                     self.dialog.show()
-                                    # closemes = QtWidgets.QMessageBox()
-                                    #
-                                    # closemes.setWindowTitle("Успех")
-                                    # closemes.setText(
-                                    #     "На ваш Email пришел код")
-                                    # closemes.buttonClicked.connect(self.close)
-                                    # closemes = closemes.exec_()
 
                                 elif response.status_code == 403:
                                     closemes = QtWidgets.QMessageBox()
@@ -376,6 +377,12 @@ class Registration(QtWidgets.QWidget):
 
     def closeEvent(self, event):
         self.parent.setEnabled(True)
+        try:
+            self.parent.login = self.login
+            self.parent.password = self.password
+            # self.parent.login_def()
+        except Exception as ex:
+            print(ex, "close_event error")
 
 
 class Email_dialog(QtWidgets.QWidget):
@@ -428,7 +435,7 @@ class Email_dialog(QtWidgets.QWidget):
                 closemes = closemes.exec_()
 
     def closeEvent(self, event):
-        self.parent.setEnabled(True)
+        self.parent.close()
         try:
             post(f"{response_address}/email_verification_delete",
                  data={"email": self.email, "login": self.login})
@@ -463,6 +470,7 @@ class Check_contacts_dialog(QtWidgets.QDialog):
             if response.status_code == 200:
                 pass
                 self.hide()
+                self.parent.check_old_contacts()
                 self.parent.check_new_contacts()
             else:
                 print(response.status_code)
@@ -506,7 +514,7 @@ class Delete_contact_dialog(QtWidgets.QDialog):
                                   "delete_login": self.parent.ui.listWidget_contacts.currentItem().text()})
             if response.status_code == 200:
                 self.hide()
-                self.parent.ui.listWidget_contacts.clear()
+
                 self.parent.check_old_contacts()
             else:
                 closemes = QtWidgets.QMessageBox()
