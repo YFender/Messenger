@@ -238,8 +238,7 @@ class Login(QtWidgets.QWidget):
                             conn = connect("user_log.sqlite")
                             cursor = conn.cursor()
                             cursor.execute(
-                                f'INSERT INTO User_log(Login, Password) default VALUES("{login}", "{password}")'.replace(
-                                    "default", ""))
+                                f'INSERT INTO User_log(Login, Password) default VALUES("{login}", "{password}")')
                             conn.commit()
                             conn.close()
 
