@@ -67,7 +67,7 @@ class MyWin(QtWidgets.QMainWindow):
                         closemes = QtWidgets.QMessageBox()
                         closemes.setWindowTitle("Успех")
                         closemes.setText("Подключение установлено")
-                        closemes.buttonClicked.connect(self.close)
+                        closemes.buttonClicked.connect(closemes.close)
                         closemes = closemes.exec_()
 
                         self.ui.tab_chat.setEnabled(True)
@@ -95,7 +95,7 @@ class MyWin(QtWidgets.QMainWindow):
                 conn.close()
 
         except Exception as ex:
-            print(ex)
+            print(ex, "autologin error")
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
             closemes.setText("Ошибка подключения")
@@ -210,7 +210,7 @@ class MyWin(QtWidgets.QMainWindow):
 
 
 class Login(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=MyWin):
         super(Login, self).__init__()
         self.ui = Ui_Login()
         self.ui.setupUi(self)
@@ -237,8 +237,7 @@ class Login(QtWidgets.QWidget):
 
                             conn = connect("user_log.sqlite")
                             cursor = conn.cursor()
-                            cursor.execute(
-                                f'INSERT INTO User_log(Login, Password) default VALUES("{login}", "{password}")')
+                            cursor.execute(f'INSERT INTO User_log VALUES("{login}", "{password}")')
                             conn.commit()
                             conn.close()
 
@@ -293,7 +292,7 @@ class Login(QtWidgets.QWidget):
 
 
 class Registration(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=MyWin):
         super(Registration, self).__init__()
         self.ui = Ui_Registration()
         self.ui.setupUi(self)
@@ -385,16 +384,10 @@ class Registration(QtWidgets.QWidget):
 
     def closeEvent(self, event):
         self.parent.setEnabled(True)
-        try:
-            self.parent.login = self.login
-            self.parent.password = self.password
-            self.parent.auto_login_def()
-        except Exception as ex:
-            print(ex, "close_event error")
 
 
 class Email_dialog(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=Registration):
         super(Email_dialog, self).__init__()
 
         self.ui = Ui_Dialog()
@@ -418,6 +411,12 @@ class Email_dialog(QtWidgets.QWidget):
                     "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
 
                 if response.status_code == 200:
+                    conn = connect("./user_log.sqlite")
+                    cursor = conn.cursor()
+                    cursor.execute(f'INSERT INTO User_log VALUES ("{self.login}", "{self.password}")')
+                    conn.commit()
+                    conn.close()
+
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Успех")
                     closemes.setText(
@@ -425,6 +424,8 @@ class Email_dialog(QtWidgets.QWidget):
                     closemes.buttonClicked.connect(
                         self.close)
                     closemes = closemes.exec_()
+
+
 
                 elif response.status_code == 403:
                     closemes = QtWidgets.QMessageBox()
@@ -443,8 +444,10 @@ class Email_dialog(QtWidgets.QWidget):
                 closemes = closemes.exec_()
 
     def closeEvent(self, event):
+        self.hide()
         self.parent.close()
         try:
+            self.parent.parent.auto_login_def()
             post(f"{response_address}/email_verification_delete",
                  data={"email": self.email, "login": self.login})
         except:
