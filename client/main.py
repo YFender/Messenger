@@ -256,7 +256,7 @@ class MyWin(QtWidgets.QMainWindow):
         try:
             if self.ui.lineEdit_message.text != "":
                 response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
-                print(response)
+                # print(response)
                 if response.status_code == 200:
                     self.check_messages()
 
