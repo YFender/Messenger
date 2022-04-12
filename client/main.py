@@ -31,6 +31,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.login_pushbutton.clicked.connect(self.login_def)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
         self.ui.pushButton_unlog.clicked.connect(self.unlog)
+        self.ui.pushButton_send_message.clicked.connect(self.message_def)
 
         self.ui.pushButton_delete_user.setEnabled(False)
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
@@ -111,8 +112,9 @@ class MyWin(QtWidgets.QMainWindow):
         self.w3.show()
 
     def select_contact(self):
-        print(self.ui.listWidget_contacts.currentItem().text())
+        # print(self.ui.listWidget_contacts.currentItem().text())
         self.ui.pushButton_delete_user.setEnabled(True)
+        self.check_messages()
 
     def unlog(self):
         try:
@@ -184,7 +186,7 @@ class MyWin(QtWidgets.QMainWindow):
         try:
             response = post(
                 f"{response_address}/friendship_requests_check", data={"login": self.login})
-            print(response)
+            # print(response)
             if response.status_code == 200:
                 self.w7 = Check_contacts_dialog(self, response.text)
                 self.w7.show()
@@ -197,10 +199,10 @@ class MyWin(QtWidgets.QMainWindow):
     def check_old_contacts(self):
         self.ui.listWidget_contacts.clear()
         response = post(f"{response_address}/friends_check", data={"login": self.login})
-        print(response)
+        # print(response)
         if response.status_code == 200:
             # print("asdasd")
-            print(response.text)
+            # print(response.text)
             for i in response.text.split(" "):
                 self.ui.listWidget_contacts.addItem(i)
 
@@ -208,6 +210,33 @@ class MyWin(QtWidgets.QMainWindow):
         self.w8 = Delete_contact_dialog(self)
         self.w8.show()
 
+    def message_def(self):
+        response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
+        print(response)
+        if response.status_code == 200:
+            self.check_messages()
+        else:
+            pass
+        self.ui.lineEdit_message.clear()
+
+    def check_messages(self):
+        try:
+            response = post(f"{response_address}/check_messages", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text()})
+            print(response)
+            if response.status_code == 200:
+                # print(response.json())
+                a = str()
+                data = response.json()
+                print(data)
+                for i in data:
+                    a += f'{data[i][0]} : {data[i][1]}' + '\n'
+                self.ui.textBrowser_chat.setText(a)
+
+            else:
+                pass
+            self.timer.singleShot(1000, self.check_messages)
+        except Exception as ex:
+            print(ex, "check_messages_error")
 
 class Login(QtWidgets.QWidget):
     def __init__(self, parent=MyWin):

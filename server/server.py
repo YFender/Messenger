@@ -12,12 +12,13 @@ from aiosqlite import connect
 class Server_http(web.View):
 
     async def get(self):
-        return web.Response(status=200)
+        # return web.Response(status=200)
+        return web.FileResponse(status=200, path="./picture.jpg")
 
     async def post(self):
         try:
             path = str(self.request.match_info.get('path', None))
-            print(path)
+            # print(path)
             data = await self.request.post()
 
             if path == "login":
@@ -27,7 +28,10 @@ class Server_http(web.View):
                 return await self.registration_def(data["email"], data["login"], data["password"])
 
             elif path == "message":
-                return await self.message_def(data)
+                return await self.message_def(data["from_user"], data["to_user"], data["message_text"])
+
+            elif path == "check_messages":
+                return await self.check_messages(data["from_user"], data["to_user"])
 
             elif path == "email_verification":
                 return await self.verification(data["email"], data["login"], data["password"], data["check_str"])
@@ -113,12 +117,29 @@ class Server_http(web.View):
             print(ex, "verification_error")
             return web.Response(status=500)
 
-    async def message_def(self, data):
-        from_user = data["from_user"]
-        to_user = data["to_user"]
-        message_text = data["message_text"]
-        request = f'INSERT INTO Messages VALUES(Null, "{from_user}", "{to_user}", "{message_text}")'
-        return web.Response(status=200)
+    async def message_def(self, from_user, to_user, message_text):
+        try:
+            request = f'INSERT INTO Messages VALUES(Null, "{from_user}", "{to_user}", "{message_text}")'
+            await self.sql_request_users(request)
+            return web.Response(status=200)
+        except Exception as ex:
+            print(ex, "message_def error")
+            web.Response(status=500)
+
+    async def check_messages(self, from_user, to_user):
+        request = f'SELECT * FROM Messages WHERE From_user = "{from_user}" AND To_user = "{to_user}" OR From_user = "{to_user}" AND To_user = "{from_user}"'
+        conn = await connect("./database.sqlite")
+        cursor = await conn.execute(request)
+        result = await cursor.fetchall()
+        await cursor.close()
+        await conn.close()
+        data = {}
+        if result:
+            for i in result:
+                data[i[0]] = [i[1], i[3]]
+            return web.json_response(data=data)
+        else:
+            return web.Response(status=404)
 
     async def email_verification_delete(self, email, login):
 
