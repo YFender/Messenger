@@ -254,26 +254,27 @@ class MyWin(QtWidgets.QMainWindow):
 
     def message_def(self):
         try:
-            response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
-            print(response)
-            if response.status_code == 200:
-                self.check_messages()
+            if self.ui.lineEdit_message.text != "":
+                response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
+                print(response)
+                if response.status_code == 200:
+                    self.check_messages()
 
-            else:
-                for i in range(5):
-                    response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
-                    if response.status_code == 200:
-                        self.check_messages()
-                        break
+                else:
+                    for i in range(5):
+                        response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
+                        if response.status_code == 200:
+                            self.check_messages()
+                            break
 
-                    elif i == 4:
-                        closemes = QtWidgets.QMessageBox()
-                        closemes.setWindowTitle("Ошибка")
-                        closemes.setText("Ошибка отправки сообщения")
-                        closemes.buttonClicked.connect(closemes.close)
-                        closemes = closemes.exec_()
+                        elif i == 4:
+                            closemes = QtWidgets.QMessageBox()
+                            closemes.setWindowTitle("Ошибка")
+                            closemes.setText("Ошибка отправки сообщения")
+                            closemes.buttonClicked.connect(closemes.close)
+                            closemes = closemes.exec_()
 
-            self.ui.lineEdit_message.clear()
+                self.ui.lineEdit_message.clear()
         except Exception as ex:
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
@@ -588,8 +589,8 @@ class Check_contacts_dialog(QtWidgets.QDialog):
             print(ex)
 
     def reject(self) -> None:
-        response = post(f"{response_address}/friendship_requests_check_no")
-        self.close()
+        response = post(f"{response_address}/friendship_requests_check_no", data={"to_login": self.parent.login, "from_login": self.from_user})
+        self.hide()
         # self.parent.check_new_contacts()
 
 

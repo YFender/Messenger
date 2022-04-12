@@ -190,7 +190,7 @@ class Server_http(web.View):
             return web.Response(status=200)
 
     async def friendship_requests_check_no(self, to_login, from_login):
-        request = f'DELETE FROM Friendship_requests WHERE To_user = "{to_login}" AND From_user = "{from_login}"'
+        request = f'DELETE FROM Friendship_requests WHERE To_user = "{to_login}" AND From_user = "{from_login}" '
         await self.sql_request_users(request)
         return web.Response(status=200)
 
