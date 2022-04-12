@@ -52,7 +52,7 @@ class MyWin(QtWidgets.QMainWindow):
                 conn = connect("user_log.sqlite")
                 cursor = conn.cursor()
                 cursor.execute(
-                    "CREATE TABLE User_log(UserId INTEGER PRIMARY KEY, Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
+                    "CREATE TABLE User_log(Login VARCHAR(20) NOT NULL, Password VARCHAR(20) NOT NULL)")
                 conn.commit()
                 conn.close()
             else:
@@ -116,9 +116,10 @@ class MyWin(QtWidgets.QMainWindow):
         self.w3.show()
 
     def select_contact(self):
+        self.ui.textBrowser_chat.clear()
         # print(self.ui.listWidget_contacts.currentItem().text())
         self.selected_contact = self.ui.listWidget_contacts.currentRow()
-        print(self.selected_contact)
+        # print(self.selected_contact)
         self.ui.pushButton_delete_user.setEnabled(True)
         self.check_messages()
 
@@ -228,7 +229,7 @@ class MyWin(QtWidgets.QMainWindow):
                         self.ui.listWidget_contacts.addItem(i)
 
             elif len(response.text.split(" ")) < len(self.contacts_list):
-                diff = list(set(response.text.split(" ")).difference(set(self.contacts_list)))
+                diff = list(set(self.contacts_list).difference(set(response.text.split(" "))))
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Уведомление")
                 closemes.setText(f"Пользователь {diff[0]} удалил вас")
@@ -547,9 +548,10 @@ class Check_contacts_dialog(QtWidgets.QDialog):
                             data={"to_login": self.parent.login, "from_login": self.from_user})
             print(response.status_code)
             if response.status_code == 200:
-                pass
+                self.parent.ui.listWidget_contacts.addItem(self.from_user)
+                self.parent.contacts_list.append(self.from_user)
                 self.hide()
-                self.parent.check_old_contacts()
+                # self.parent.check_old_contacts()
                 self.parent.check_new_contacts()
             else:
                 print(response.status_code)
@@ -602,7 +604,7 @@ class Delete_contact_dialog(QtWidgets.QDialog):
                 self.parent.ui.listWidget_contacts.takeItem(self.parent.ui.listWidget_contacts.currentRow())
 
                 self.hide()
-                self.parent.check_old_contacts()
+                # self.parent.check_old_contacts()
             else:
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
