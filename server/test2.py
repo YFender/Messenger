@@ -1,5 +1,5 @@
-from smtplib import SMTP_SSL
+a = "aaa vvv ggg".split(" ")
+b = "aaa ggg".split(" ")
+dif = list(set(a).difference(set(b)))
+print(dif[0])
 
-email_server = SMTP_SSL("smtp.mail.ru", 465)
-email_server.sendmail()
-print(email_server.)

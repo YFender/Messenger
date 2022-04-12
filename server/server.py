@@ -127,6 +127,7 @@ class Server_http(web.View):
             web.Response(status=500)
 
     async def check_messages(self, from_user, to_user):
+        print("check_messages")
         request = f'SELECT * FROM Messages WHERE From_user = "{from_user}" AND To_user = "{to_user}" OR From_user = "{to_user}" AND To_user = "{from_user}"'
         conn = await connect("./database.sqlite")
         cursor = await conn.execute(request)
