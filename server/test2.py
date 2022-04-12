@@ -1,5 +1,12 @@
-a = "aaa vvv ggg".split(" ")
-b = "aaa ggg".split(" ")
-dif = list(set(a).difference(set(b)))
-print(dif[0])
+import time
+import subprocess
+import datetime
 
+from pyngrok import ngrok
+tunnel = ngrok.connect(8080)
+ngrok.install_ngrok()
+
+def restart():
+    pass
+
+restart()

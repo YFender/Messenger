@@ -35,10 +35,15 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_unlog.clicked.connect(self.unlog)
         self.ui.pushButton_send_message.clicked.connect(self.message_def)
 
+        self.ui.pushButton_send_message.setShortcut("Enter")
+
         self.ui.pushButton_delete_user.setEnabled(False)
+        self.ui.pushButton_send_message.setEnabled(False)
         self.ui.listWidget_contacts.itemClicked.connect(self.select_contact)
         self.ui.pushButton_add_contact.clicked.connect(self.add_contact)
         self.ui.pushButton_delete_user.clicked.connect(self.delete_contact)
+
+        # print(self.ui.listWidget_contacts.count())
 
         self.auto_login_def()
 
@@ -117,10 +122,10 @@ class MyWin(QtWidgets.QMainWindow):
 
     def select_contact(self):
         self.ui.textBrowser_chat.clear()
-        # print(self.ui.listWidget_contacts.currentItem().text())
         self.selected_contact = self.ui.listWidget_contacts.currentRow()
-        # print(self.selected_contact)
+
         self.ui.pushButton_delete_user.setEnabled(True)
+        self.ui.pushButton_send_message.setEnabled(True)
         self.check_messages()
 
     def unlog(self):
@@ -249,13 +254,33 @@ class MyWin(QtWidgets.QMainWindow):
         self.w8.show()
 
     def message_def(self):
-        response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
-        print(response)
-        if response.status_code == 200:
-            self.check_messages()
-        else:
-            pass
-        self.ui.lineEdit_message.clear()
+        try:
+            response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
+            print(response)
+            if response.status_code == 200:
+                self.check_messages()
+
+            else:
+                for i in range(5):
+                    response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
+                    if response.status_code == 200:
+                        self.check_messages()
+                        break
+
+                    elif i == 4:
+                        closemes = QtWidgets.QMessageBox()
+                        closemes.setWindowTitle("Ошибка")
+                        closemes.setText("Ошибка отправки сообщения")
+                        closemes.buttonClicked.connect(closemes.close)
+                        closemes = closemes.exec_()
+
+            self.ui.lineEdit_message.clear()
+        except Exception as ex:
+            closemes = QtWidgets.QMessageBox()
+            closemes.setWindowTitle("Ошибка")
+            closemes.setText("Ошибка отправки сообщения")
+            closemes.buttonClicked.connect(closemes.close)
+            closemes = closemes.exec_()
 
     def check_messages(self):
         try:
@@ -565,8 +590,8 @@ class Check_contacts_dialog(QtWidgets.QDialog):
 
     def reject(self) -> None:
         response = post(f"{response_address}/friendship_requests_check_no")
-        self.hide()
-        self.parent.check_new_contacts()
+        self.close()
+        # self.parent.check_new_contacts()
 
 
 class Delete_contact_dialog(QtWidgets.QDialog):
@@ -604,6 +629,12 @@ class Delete_contact_dialog(QtWidgets.QDialog):
                 self.parent.ui.listWidget_contacts.takeItem(self.parent.ui.listWidget_contacts.currentRow())
 
                 self.hide()
+
+            if self.parent.ui.listWidget_contacts.count() == 0:
+                self.parent.ui.pushButton_send_message.setEnabled(False)
+                self.parent.ui.pushButton_delete_user.setEnabled(False)
+
+
                 # self.parent.check_old_contacts()
             else:
                 closemes = QtWidgets.QMessageBox()
