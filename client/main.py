@@ -1,6 +1,5 @@
 from os import path, remove
 from re import findall, match
-# from add_contact import Ui_Add_contact
 from sqlite3 import connect
 from sys import argv, exit
 

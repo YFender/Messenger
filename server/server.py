@@ -2,7 +2,6 @@ from random import choice
 from smtplib import SMTP_SSL
 from string import ascii_uppercase, digits
 
-
 from aiohttp import web
 from aiosqlite import connect
 
