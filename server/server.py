@@ -1,13 +1,31 @@
 from random import choice
 from smtplib import SMTP_SSL
 from string import ascii_uppercase, digits
+import sqlite3
 
 from aiohttp import web
 from aiosqlite import connect
+from os import path
 
+if not path.isfile("./database.sqlite"):
+        conn =  sqlite3.connect("./database.sqlite")
+        cursor =  conn.cursor()
+        cursor.execute('CREATE TABLE Friends(Friendship_id integer, User_1 Varchar(50), User_2 Varchar(50))')
+        conn.commit()
+        cursor.execute('CREATE TABLE "Friendship_requests" ("ReqId"	INTEGER PRIMARY KEy,"From_user"	TEXT not null,"To_user"	TEXT not null)')
+        conn.commit()
+        cursor.execute('CREATE TABLE "Messages" ("MessageID"	INTEGER UNIQUE,"From_user"	VARCHAR(50) NOT NULL,"To_user"	VARCHAR(50) NOT NULL,"Message_text"	TEXT NOT NULL,PRIMARY KEY("MessageID" AUTOINCREMENT))')
+        conn.commit()
+        cursor.execute('CREATE TABLE "Users" ("UserId"	INTEGER UNIQUE,"Email"	VARCHAR(20) NOT NULL UNIQUE,"Login"	VARCHAR(20) NOT NULL UNIQUE,"Password"	VARCHAR(20) NOT NULL,PRIMARY KEY("UserId"))')
+        conn.commit()
+        cursor.execute('CREATE TABLE "Verification" ("VerId"	INTEGER,"Email"	VARCHAR(50) NOT NULL,"Login"	VARCHAR(50) NOT NULL,"Password"	VARCHAR(50) NOT NULL,"CheckStr"	VARCHAR(50) NOT NULL,PRIMARY KEY("VerId"))')
+        conn.commit()
+        cursor.close()
+        conn.close()
 
 
 # пароль для ящика 1UYJ5rCiuKbqKJyFLGtB
+
 
 
 class Server_http(web.View):
