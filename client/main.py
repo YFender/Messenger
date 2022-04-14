@@ -11,8 +11,9 @@ from email_dialog import Ui_Dialog
 from login import Ui_Login
 from registration import Ui_Registration
 from time import sleep
+from collections import deque
 
-response_address = "http://efd0-185-32-135-106.eu.ngrok.io"
+response_address = "http://localhost:8080"
 
 
 class MyWin(QtWidgets.QMainWindow):
@@ -23,6 +24,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         self.contacts_list = []
+        self.messages = {}
 
         self.ui.label_unlog.hide()
         self.ui.pushButton_unlog.hide()
@@ -288,32 +290,61 @@ class MyWin(QtWidgets.QMainWindow):
 
     def check_messages(self):
         try:
-            self.ui.textBrowser_chat.clear()
+
             if self.ui.listWidget_contacts.currentItem() != None:
                 response = post(f"{response_address}/check_messages", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text()})
-                # print(response)
-                a = str()
 
                 if response.status_code == 200:
                     # print(response.json())
-
                     data = response.json()
                     # print(data)
-                    for i in data:
-                        a += f'{data[i][0]} : {data[i][1]}' + '\n'
-                    self.ui.textBrowser_chat.append(a)
+                    if self.messages:
+                        if deque(self.messages)[-1] != deque(data)[-1]:
+                            self.ui.textBrowser_chat.clear()
+                            self.messages = data
+                            a = str()
+                            for i in self.messages:
+                                a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
+                            self.ui.textBrowser_chat.append(a)
+                    else:
+                        a = str()
+                        self.messages = data
+                        for i in self.messages:
+                            a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
+                        self.ui.textBrowser_chat.append(a)
+
                 else:
                     while response.status_code != 200:
                         response = post(f"{response_address}/check_messages", data={"from_user": self.login, "to_user": self.ui.listWidget_contacts.currentItem().text()})
                         print(response.status_code)
                         if response.status_code == 429:
                             sleep(500)
+                        elif response.status_code == 500:
+                            closemes = QtWidgets.QMessageBox()
+                            closemes.setWindowTitle("Ошибка")
+                            closemes.setText("Неизвестная ошибка")
+                            closemes.buttonClicked.connect(closemes.close)
+                            closemes = closemes.exec_()
+                            break
                         else:
                             sleep(200)
+
                     data = response.json()
-                    for i in data:
-                        a += f'{data[i][0]} : {data[i][1]}' + '\n'
-                    self.ui.textBrowser_chat.append(a)
+                    print(data)
+                    if self.messages:
+                        if deque(self.messages)[-1] != deque(data)[-1]:
+                            self.ui.textBrowser_chat.clear()
+                            self.messages = data
+                            a = str()
+                            for i in self.messages:
+                                a+=f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
+                            self.ui.textBrowser_chat.append(a)
+                    else:
+                        a = str()
+                        self.messages = data
+                        for i in self.messages:
+                            a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
+                        self.ui.textBrowser_chat.append(a)
 
                 self.timer.singleShot(1000, self.check_messages)
                 # self.ui.listWidget_contacts.currentItem().setSelected(True)
@@ -321,6 +352,11 @@ class MyWin(QtWidgets.QMainWindow):
                 self.ui.listWidget_contacts.clear()
         except Exception as ex:
             print(ex, "check_messages_error")
+            closemes = QtWidgets.QMessageBox()
+            closemes.setWindowTitle("Ошибка")
+            closemes.setText("Неизвестная ошибка")
+            closemes.buttonClicked.connect(closemes.close)
+            closemes = closemes.exec_()
 
 class Login(QtWidgets.QWidget):
     def __init__(self, parent=MyWin):

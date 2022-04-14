@@ -137,7 +137,8 @@ class Server_http(web.View):
         await conn.close()
         data = {}
         if result:
-            for i in result:
+            # print(len(result))
+            for i in result[-50::1]:
                 data[i[0]] = [i[1], i[3]]
             return web.json_response(data=data)
         else:
