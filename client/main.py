@@ -10,8 +10,9 @@ from client import Ui_Client_MainWindow
 from email_dialog import Ui_Dialog
 from login import Ui_Login
 from registration import Ui_Registration
+from time import sleep
 
-response_address = "http://localhost:8080"
+response_address = "http://efd0-185-32-135-106.eu.ngrok.io"
 
 
 class MyWin(QtWidgets.QMainWindow):
@@ -34,7 +35,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_unlog.clicked.connect(self.unlog)
         self.ui.pushButton_send_message.clicked.connect(self.message_def)
 
-        self.ui.pushButton_send_message.setShortcut("Enter")
+        self.ui.pushButton_send_message.setShortcut("Return")
 
         self.ui.pushButton_delete_user.setEnabled(False)
         self.ui.pushButton_send_message.setEnabled(False)
@@ -71,6 +72,7 @@ class MyWin(QtWidgets.QMainWindow):
                     print(result)
                     response_login = post(
                         f"{response_address}/login", data=result)
+                    print(response_login.status_code)
 
                     if response_login.status_code == 200:
                         closemes = QtWidgets.QMessageBox()
@@ -88,6 +90,9 @@ class MyWin(QtWidgets.QMainWindow):
                         self.ui.label_unlog.show()
                         self.ui.pushButton_unlog.show()
 
+                        self.check_new_contacts()
+                        self.check_old_contacts()
+
                     elif response_login.status_code == 404:
                         closemes = QtWidgets.QMessageBox()
                         closemes.setWindowTitle("Ошибка")
@@ -96,8 +101,7 @@ class MyWin(QtWidgets.QMainWindow):
                         closemes = closemes.exec_()
                         remove("./user_log.sqlite")
 
-                    self.check_new_contacts()
-                    self.check_old_contacts()
+
                 else:
                     self.ui.tabWidget.setCurrentIndex(1)
                     self.ui.tab_chat.setEnabled(False)
@@ -254,12 +258,13 @@ class MyWin(QtWidgets.QMainWindow):
 
     def message_def(self):
         try:
-            if self.ui.lineEdit_message.text != "":
+            if self.ui.lineEdit_message.text() != "":
                 response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
                 # print(response)
                 if response.status_code != 200:
                     for i in range(15):
                         response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
+
                         if response.status_code == 200:
                             break
 
@@ -269,6 +274,8 @@ class MyWin(QtWidgets.QMainWindow):
                             closemes.setText("Ошибка отправки сообщения")
                             closemes.buttonClicked.connect(closemes.close)
                             closemes = closemes.exec_()
+
+                        sleep(200)
 
                 self.ui.lineEdit_message.clear()
 
@@ -281,23 +288,32 @@ class MyWin(QtWidgets.QMainWindow):
 
     def check_messages(self):
         try:
+            self.ui.textBrowser_chat.clear()
             if self.ui.listWidget_contacts.currentItem() != None:
                 response = post(f"{response_address}/check_messages", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text()})
                 # print(response)
+                a = str()
+
                 if response.status_code == 200:
                     # print(response.json())
-                    a = str()
+
                     data = response.json()
                     # print(data)
                     for i in data:
                         a += f'{data[i][0]} : {data[i][1]}' + '\n'
-                    self.ui.textBrowser_chat.setText(a)
+                    self.ui.textBrowser_chat.append(a)
                 else:
                     while response.status_code != 200:
                         response = post(f"{response_address}/check_messages", data={"from_user": self.login, "to_user": self.ui.listWidget_contacts.currentItem().text()})
+                        print(response.status_code)
+                        if response.status_code == 429:
+                            sleep(500)
+                        else:
+                            sleep(200)
+                    data = response.json()
                     for i in data:
                         a += f'{data[i][0]} : {data[i][1]}' + '\n'
-                    self.ui.textBrowser_chat.setText(a)
+                    self.ui.textBrowser_chat.append(a)
 
                 self.timer.singleShot(1000, self.check_messages)
                 # self.ui.listWidget_contacts.currentItem().setSelected(True)
