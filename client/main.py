@@ -257,17 +257,13 @@ class MyWin(QtWidgets.QMainWindow):
             if self.ui.lineEdit_message.text != "":
                 response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
                 # print(response)
-                if response.status_code == 200:
-                    self.check_messages()
-
-                else:
-                    for i in range(5):
+                if response.status_code != 200:
+                    for i in range(15):
                         response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
                         if response.status_code == 200:
-                            self.check_messages()
                             break
 
-                        elif i == 4:
+                        elif i == 14:
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Ошибка")
                             closemes.setText("Ошибка отправки сообщения")
@@ -275,6 +271,7 @@ class MyWin(QtWidgets.QMainWindow):
                             closemes = closemes.exec_()
 
                 self.ui.lineEdit_message.clear()
+
         except Exception as ex:
             closemes = QtWidgets.QMessageBox()
             closemes.setWindowTitle("Ошибка")
@@ -292,6 +289,12 @@ class MyWin(QtWidgets.QMainWindow):
                     a = str()
                     data = response.json()
                     # print(data)
+                    for i in data:
+                        a += f'{data[i][0]} : {data[i][1]}' + '\n'
+                    self.ui.textBrowser_chat.setText(a)
+                else:
+                    while response.status_code != 200:
+                        response = post(f"{response_address}/check_messages", data={"from_user": self.login, "to_user": self.ui.listWidget_contacts.currentItem().text()})
                     for i in data:
                         a += f'{data[i][0]} : {data[i][1]}' + '\n'
                     self.ui.textBrowser_chat.setText(a)
