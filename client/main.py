@@ -30,7 +30,14 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.pushButton_unlog.hide()
         self.ui.tab_chat.setEnabled(False)
 
-        self.timer = QtCore.QTimer()
+        self.timer_check_messages = QtCore.QTimer()
+        self.timer_check_new_contacts = QtCore.QTimer()
+        self.timer_check_old_contacts = QtCore.QTimer()
+
+        self.timer_check_new_contacts.timeout.connect(self.check_new_contacts)
+        self.timer_check_old_contacts.timeout.connect(self.check_old_contacts)
+        self.timer_check_messages.timeout.connect(self.check_messages)
+
 
         self.ui.login_pushbutton.clicked.connect(self.login_def)
         self.ui.reg_pushbutton.clicked.connect(self.registration)
@@ -94,6 +101,9 @@ class MyWin(QtWidgets.QMainWindow):
 
                         self.check_new_contacts()
                         self.check_old_contacts()
+                        self.timer_check_new_contacts.start(5000)
+                        self.timer_check_messages.start(1000)
+                        self.timer_check_old_contacts.start(10000)
 
                     elif response_login.status_code == 404:
                         closemes = QtWidgets.QMessageBox()
@@ -205,17 +215,16 @@ class MyWin(QtWidgets.QMainWindow):
                 f"{response_address}/friendship_requests_check", data={"login": self.login})
             # print(response)
             if response.status_code == 200:
+                print("asdasdsd")
                 self.w7 = Check_contacts_dialog(self, response.text)
                 self.w7.show()
-            else:
-                self.timer.singleShot(5000, self.check_new_contacts)
 
         except Exception as ex:
             print(ex)
 
     def check_old_contacts(self):
         response = post(f"{response_address}/friends_check", data={"login": self.login})
-
+        print(response.text, self.contacts_list)
         if response.status_code == 200:
             if len(response.text.split(" ")) > len(self.contacts_list):
                 if not self.contacts_list:
@@ -228,7 +237,7 @@ class MyWin(QtWidgets.QMainWindow):
                     diff = list(set(response.text.split(" ")).difference(set(self.contacts_list)))
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Уведомление")
-                    closemes.setText(f"Пользователь {diff[0]} принял вашу заявку в дрьзья")
+                    closemes.setText(f"Пользователь {diff[0]} принял вашу заявку в друзья")
                     closemes.buttonClicked.connect(closemes.close)
                     closemes = closemes.exec_()
 
@@ -251,8 +260,6 @@ class MyWin(QtWidgets.QMainWindow):
                 self.ui.listWidget_contacts.clear()
                 for i in self.contacts_list:
                     self.ui.listWidget_contacts.addItem(i)
-
-        self.timer.singleShot(10000, self.check_old_contacts)
 
     def delete_contact(self):
         self.w8 = Delete_contact_dialog(self)
@@ -278,6 +285,8 @@ class MyWin(QtWidgets.QMainWindow):
                             closemes = closemes.exec_()
 
                         sleep(200)
+                else:
+                    self.check_messages()
 
                 self.ui.lineEdit_message.clear()
 
@@ -290,7 +299,6 @@ class MyWin(QtWidgets.QMainWindow):
 
     def check_messages(self):
         try:
-
             if self.ui.listWidget_contacts.currentItem() != None:
                 response = post(f"{response_address}/check_messages", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text()})
                 print(response.status_code)
@@ -298,21 +306,21 @@ class MyWin(QtWidgets.QMainWindow):
                     # print(response.json())
                     data = response.json()
                     # print(data)
-                    if data:
-                        if self.messages:
-                            if deque(self.messages)[-1] != deque(data)[-1]:
-                                self.ui.textBrowser_chat.clear()
-                                self.messages = data
-                                a = str()
-                                for i in self.messages:
-                                    a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
-                                self.ui.textBrowser_chat.append(a)
-                        else:
-                            a = str()
+
+                    if self.messages:
+                        if deque(self.messages)[-1] != deque(data)[-1]:
+                            self.ui.textBrowser_chat.clear()
                             self.messages = data
+                            a = str()
                             for i in self.messages:
                                 a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
                             self.ui.textBrowser_chat.append(a)
+                    else:
+                        a = str()
+                        self.messages = data
+                        for i in self.messages:
+                            a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
+                        self.ui.textBrowser_chat.append(a)
 
                 else:
                     if response.status_code != 404:
@@ -347,11 +355,8 @@ class MyWin(QtWidgets.QMainWindow):
                             for i in self.messages:
                                 a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
                             self.ui.textBrowser_chat.append(a)
-
-                # self.timer.singleShot(1000, self.check_messages)
-                # self.ui.listWidget_contacts.currentItem().setSelected(True)
-            else:
-                self.ui.listWidget_contacts.clear()
+                    else:
+                        self.messages = []
         except Exception as ex:
             print(ex, "check_messages_error")
             closemes = QtWidgets.QMessageBox()
@@ -403,6 +408,9 @@ class Login(QtWidgets.QWidget):
 
                             self.parent.check_new_contacts()
                             self.parent.check_old_contacts()
+                            self.parent.timer_check_new_contacts.start(5000)
+                            self.parent.timer_check_messages.start(1000)
+                            self.parent.timer_check_old_contacts.start(10000)
 
                         if response.status_code == 404:
                             closemes = QtWidgets.QMessageBox()
@@ -568,6 +576,10 @@ class Email_dialog(QtWidgets.QWidget):
                     conn.commit()
                     conn.close()
 
+                    self.parent.parent.timer_check_new_contacts.start(5000)
+                    self.parent.parent.timer_check_messages.start(1000)
+                    self.parent.parent.timer_check_old_contacts.start(10000)
+
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Успех")
                     closemes.setText(
@@ -628,13 +640,15 @@ class Check_contacts_dialog(QtWidgets.QDialog):
         try:
             response = post(f"{response_address}/friendship_requests_check_yes",
                             data={"to_login": self.parent.login, "from_login": self.from_user})
-            print(response.status_code)
+            # print(response.status_code)
             if response.status_code == 200:
                 self.parent.ui.listWidget_contacts.addItem(self.from_user)
                 self.parent.contacts_list.append(self.from_user)
-                self.hide()
-                # self.parent.check_old_contacts()
+
+                self.parent.check_old_contacts()
                 self.parent.check_new_contacts()
+
+                self.hide()
             else:
                 print(response.status_code)
                 closemes = QtWidgets.QMessageBox()
@@ -687,9 +701,9 @@ class Delete_contact_dialog(QtWidgets.QDialog):
 
                 self.hide()
 
-            if self.parent.ui.listWidget_contacts.count() == 0:
-                self.parent.ui.pushButton_send_message.setEnabled(False)
-                self.parent.ui.pushButton_delete_user.setEnabled(False)
+                if self.parent.ui.listWidget_contacts.count() == 0:
+                    self.parent.ui.pushButton_send_message.setEnabled(False)
+                    self.parent.ui.pushButton_delete_user.setEnabled(False)
 
 
                 # self.parent.check_old_contacts()
