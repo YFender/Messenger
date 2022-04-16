@@ -293,60 +293,62 @@ class MyWin(QtWidgets.QMainWindow):
 
             if self.ui.listWidget_contacts.currentItem() != None:
                 response = post(f"{response_address}/check_messages", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text()})
-
+                print(response.status_code)
                 if response.status_code == 200:
                     # print(response.json())
                     data = response.json()
                     # print(data)
-                    if self.messages:
-                        if deque(self.messages)[-1] != deque(data)[-1]:
-                            self.ui.textBrowser_chat.clear()
-                            self.messages = data
+                    if data:
+                        if self.messages:
+                            if deque(self.messages)[-1] != deque(data)[-1]:
+                                self.ui.textBrowser_chat.clear()
+                                self.messages = data
+                                a = str()
+                                for i in self.messages:
+                                    a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
+                                self.ui.textBrowser_chat.append(a)
+                        else:
                             a = str()
+                            self.messages = data
                             for i in self.messages:
                                 a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
                             self.ui.textBrowser_chat.append(a)
-                    else:
-                        a = str()
-                        self.messages = data
-                        for i in self.messages:
-                            a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
-                        self.ui.textBrowser_chat.append(a)
 
                 else:
-                    while response.status_code != 200:
-                        response = post(f"{response_address}/check_messages", data={"from_user": self.login, "to_user": self.ui.listWidget_contacts.currentItem().text()})
-                        print(response.status_code)
-                        if response.status_code == 429:
-                            sleep(500)
-                        elif response.status_code == 500:
-                            closemes = QtWidgets.QMessageBox()
-                            closemes.setWindowTitle("Ошибка")
-                            closemes.setText("Неизвестная ошибка")
-                            closemes.buttonClicked.connect(closemes.close)
-                            closemes = closemes.exec_()
-                            break
+                    if response.status_code != 404:
+                        while response.status_code != 200:
+                            response = post(f"{response_address}/check_messages", data={"from_user": self.login, "to_user": self.ui.listWidget_contacts.currentItem().text()})
+                            print(response.status_code)
+                            if response.status_code == 429:
+                                sleep(500)
+                            elif response.status_code == 500:
+                                closemes = QtWidgets.QMessageBox()
+                                closemes.setWindowTitle("Ошибка")
+                                closemes.setText("Неизвестная ошибка")
+                                closemes.buttonClicked.connect(closemes.close)
+                                closemes = closemes.exec_()
+                                break
+                            else:
+                                sleep(200)
+
+                        data = response.json()
+                        print(data)
+                        if self.messages:
+                            if deque(self.messages)[-1] != deque(data)[-1]:
+                                self.ui.textBrowser_chat.clear()
+                                self.messages = data
+                                a = str()
+                                for i in self.messages:
+                                    a+=f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
+                                self.ui.textBrowser_chat.append(a)
                         else:
-                            sleep(200)
-
-                    data = response.json()
-                    print(data)
-                    if self.messages:
-                        if deque(self.messages)[-1] != deque(data)[-1]:
-                            self.ui.textBrowser_chat.clear()
-                            self.messages = data
                             a = str()
+                            self.messages = data
                             for i in self.messages:
-                                a+=f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
+                                a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
                             self.ui.textBrowser_chat.append(a)
-                    else:
-                        a = str()
-                        self.messages = data
-                        for i in self.messages:
-                            a += f'{self.messages[i][0]} : {self.messages[i][1]}' + '\n'
-                        self.ui.textBrowser_chat.append(a)
 
-                self.timer.singleShot(1000, self.check_messages)
+                # self.timer.singleShot(1000, self.check_messages)
                 # self.ui.listWidget_contacts.currentItem().setSelected(True)
             else:
                 self.ui.listWidget_contacts.clear()
