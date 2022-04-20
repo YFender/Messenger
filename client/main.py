@@ -78,10 +78,10 @@ class MyWin(QtWidgets.QMainWindow):
                 if result:
                     self.login, self.password = result[0], result[1]
                     result = {"login": self.login, "password": self.password}
-                    print(result)
+                    # print(result)
                     response_login = post(
                         f"{response_address}/login", data=result)
-                    print(response_login.status_code)
+                    # print(response_login.status_code)
 
                     if response_login.status_code == 200:
                         closemes = QtWidgets.QMessageBox()
@@ -215,7 +215,7 @@ class MyWin(QtWidgets.QMainWindow):
                 f"{response_address}/friendship_requests_check", data={"login": self.login})
             # print(response)
             if response.status_code == 200:
-                print("asdasdsd")
+                # print("asdasdsd")
                 self.w7 = Check_contacts_dialog(self, response.text)
                 self.w7.show()
 
@@ -224,7 +224,7 @@ class MyWin(QtWidgets.QMainWindow):
 
     def check_old_contacts(self):
         response = post(f"{response_address}/friends_check", data={"login": self.login})
-        print(response.text, self.contacts_list)
+        # print(response.text, self.contacts_list)
         if response.status_code == 200:
             if len(response.text.split(" ")) > len(self.contacts_list):
                 if not self.contacts_list:
@@ -275,6 +275,7 @@ class MyWin(QtWidgets.QMainWindow):
                         response = post(f"{response_address}/message", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text(), "message_text":self.ui.lineEdit_message.text()})
 
                         if response.status_code == 200:
+                            self.check_messages()
                             break
 
                         elif i == 14:
@@ -301,7 +302,7 @@ class MyWin(QtWidgets.QMainWindow):
         try:
             if self.ui.listWidget_contacts.currentItem() != None:
                 response = post(f"{response_address}/check_messages", data={"from_user":self.login, "to_user":self.ui.listWidget_contacts.currentItem().text()})
-                print(response.status_code)
+                # print(response.status_code)
                 if response.status_code == 200:
                     # print(response.json())
                     data = response.json()
@@ -326,7 +327,7 @@ class MyWin(QtWidgets.QMainWindow):
                     if response.status_code != 404:
                         while response.status_code != 200:
                             response = post(f"{response_address}/check_messages", data={"from_user": self.login, "to_user": self.ui.listWidget_contacts.currentItem().text()})
-                            print(response.status_code)
+                            # print(response.status_code)
                             if response.status_code == 429:
                                 sleep(500)
                             elif response.status_code == 500:
@@ -340,7 +341,7 @@ class MyWin(QtWidgets.QMainWindow):
                                 sleep(200)
 
                         data = response.json()
-                        print(data)
+                        # print(data)
                         if self.messages:
                             if deque(self.messages)[-1] != deque(data)[-1]:
                                 self.ui.textBrowser_chat.clear()
@@ -475,7 +476,7 @@ class Registration(QtWidgets.QWidget):
                             if not findall('[^..\w!@#\$%\^&\*\(\)\-_\+=;:,\./\?\\\|`~\[\]\{\}]', self.password):
                                 response = post(f"{response_address}/registration", data={
                                     "email": email, "login": self.login, "password": self.password})
-                                print(response)
+                                # print(response)
                                 if response.status_code == 200:
                                     self.dialog = Email_dialog(self)
                                     self.dialog.show()
@@ -650,7 +651,7 @@ class Check_contacts_dialog(QtWidgets.QDialog):
 
                 self.hide()
             else:
-                print(response.status_code)
+                # print(response.status_code)
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText("Неизвестная ошибка")

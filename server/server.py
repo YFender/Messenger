@@ -40,44 +40,45 @@ class Server_http(web.View):
             # print(path)
             data = await self.request.post()
 
-            if path == "login":
-                return await self.login_def(str(data['login']), str(data['password']))
+            match path:
+                case "login":
+                    return await self.login_def(str(data['login']), str(data['password']))
 
-            elif path == "registration":
-                return await self.registration_def(data["email"], data["login"], data["password"])
+                case "registration":
+                    return await self.registration_def(data["email"], data["login"], data["password"])
 
-            elif path == "message":
-                return await self.message_def(data["from_user"], data["to_user"], data["message_text"])
+                case "message":
+                    return await self.message_def(data["from_user"], data["to_user"], data["message_text"])
 
-            elif path == "check_messages":
-                return await self.check_messages(data["from_user"], data["to_user"])
+                case "check_messages":
+                    return await self.check_messages(data["from_user"], data["to_user"])
 
-            elif path == "email_verification":
-                return await self.verification(data["email"], data["login"], data["password"], data["check_str"])
+                case "email_verification":
+                    return await self.verification(data["email"], data["login"], data["password"], data["check_str"])
 
-            elif path == "email_verification_delete":
-                return await self.email_verification_delete(data["email"], data["login"])
+                case "email_verification_delete":
+                    return await self.email_verification_delete(data["email"], data["login"])
 
-            elif path == "friendship_request":
-                return await self.friendship_request(data["from_user"], data["to_user"])
+                case "friendship_request":
+                    return await self.friendship_request(data["from_user"], data["to_user"])
 
-            elif path == "friendship_requests_check":
-                return await self.friendship_requests_check(data["login"])
-                # return web.Response(status=404)
-            elif path == "friendship_requests_check_yes":
-                return await self.friendship_requests_check_yes(data["to_login"], data["from_login"])
+                case "friendship_requests_check":
+                    return await self.friendship_requests_check(data["login"])
+                    # return web.Response(status=404)
+                case "friendship_requests_check_yes":
+                    return await self.friendship_requests_check_yes(data["to_login"], data["from_login"])
 
-            elif path == "friendship_requests_check_no":
-                return await self.friendship_requests_check_no(data["to_login"], data["from_login"])
+                case "friendship_requests_check_no":
+                    return await self.friendship_requests_check_no(data["to_login"], data["from_login"])
 
-            elif path == "friends_check":
-                return await self.friends_check(data["login"])
+                case "friends_check":
+                    return await self.friends_check(data["login"])
 
-            elif path == "delete_friend":
-                return await self.delete_friend(data["from_login"], data["delete_login"])
+                case "delete_friend":
+                    return await self.delete_friend(data["from_login"], data["delete_login"])
 
-            else:
-                return web.Response(status=404)
+                case _:
+                    return web.Response(status=404)
 
         except Exception as ex:
             print(ex, "post_request_error")
