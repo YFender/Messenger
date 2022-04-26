@@ -1,45 +1,48 @@
+import sqlite3
+from os import path
 from random import choice
 from smtplib import SMTP_SSL
 from string import ascii_uppercase, digits
-import sqlite3
 
 from aiohttp import web
 from aiosqlite import connect
-from os import path
 
+"""Создание базы данных, если такой не имеется"""
 if not path.isfile("./database.sqlite"):
-        conn =  sqlite3.connect("./database.sqlite")
-        cursor =  conn.cursor()
-        cursor.execute('CREATE TABLE Friends(Friendship_id integer, User_1 Varchar(50), User_2 Varchar(50))')
-        conn.commit()
-        cursor.execute('CREATE TABLE "Friendship_requests" ("ReqId"	INTEGER PRIMARY KEy,"From_user"	TEXT not null,"To_user"	TEXT not null)')
-        conn.commit()
-        cursor.execute('CREATE TABLE "Messages" ("MessageID"	INTEGER UNIQUE,"From_user"	VARCHAR(50) NOT NULL,"To_user"	VARCHAR(50) NOT NULL,"Message_text"	TEXT NOT NULL,PRIMARY KEY("MessageID" AUTOINCREMENT))')
-        conn.commit()
-        cursor.execute('CREATE TABLE "Users" ("UserId"	INTEGER UNIQUE,"Email"	VARCHAR(20) NOT NULL UNIQUE,"Login"	VARCHAR(20) NOT NULL UNIQUE,"Password"	VARCHAR(20) NOT NULL,PRIMARY KEY("UserId"))')
-        conn.commit()
-        cursor.execute('CREATE TABLE "Verification" ("VerId"	INTEGER,"Email"	VARCHAR(50) NOT NULL,"Login"	VARCHAR(50) NOT NULL,"Password"	VARCHAR(50) NOT NULL,"CheckStr"	VARCHAR(50) NOT NULL,PRIMARY KEY("VerId"))')
-        conn.commit()
-        cursor.close()
-        conn.close()
+    conn = sqlite3.connect("./database.sqlite")
+    cursor = conn.cursor()
+    cursor.execute('CREATE TABLE Friends(Friendship_id integer, User_1 Varchar(50), User_2 Varchar(50))')
+    conn.commit()
+    cursor.execute(
+        'CREATE TABLE "Friendship_requests" ("ReqId"	INTEGER PRIMARY KEy,"From_user"	TEXT not null,"To_user"	TEXT not null)')
+    conn.commit()
+    cursor.execute(
+        'CREATE TABLE "Messages" ("MessageID"	INTEGER UNIQUE,"From_user"	VARCHAR(50) NOT NULL,"To_user"	VARCHAR(50) NOT NULL,"Message_text"	TEXT NOT NULL,PRIMARY KEY("MessageID" AUTOINCREMENT))')
+    conn.commit()
+    cursor.execute(
+        'CREATE TABLE "Users" ("UserId"	INTEGER UNIQUE,"Email"	VARCHAR(20) NOT NULL UNIQUE,"Login"	VARCHAR(20) NOT NULL UNIQUE,"Password"	VARCHAR(20) NOT NULL,PRIMARY KEY("UserId"))')
+    conn.commit()
+    cursor.execute(
+        'CREATE TABLE "Verification" ("VerId"	INTEGER,"Email"	VARCHAR(50) NOT NULL,"Login"	VARCHAR(50) NOT NULL,"Password"	VARCHAR(50) NOT NULL,"CheckStr"	VARCHAR(50) NOT NULL,PRIMARY KEY("VerId"))')
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-
-# пароль для ящика 1UYJ5rCiuKbqKJyFLGtB
-
-
-
+"""Обьявление класса сервера"""
 class Server_http(web.View):
 
     async def get(self):
-        # return web.Response(status=200)
         return web.FileResponse(status=200, path="./picture.jpg")
 
     async def post(self):
         try:
+            """Определение значения пути запроса"""
             path = str(self.request.match_info.get('path', None))
-            # print(path)
+
+            """получение данных от пользователя"""
             data = await self.request.post()
 
+            """Проверка пути запроса с помощью метода множественного выбора"""
             match path:
                 case "login":
                     return await self.login_def(str(data['login']), str(data['password']))
@@ -78,15 +81,19 @@ class Server_http(web.View):
                     return await self.delete_friend(data["from_login"], data["delete_login"])
 
                 case _:
+                    """Если путь запроса не подходит под какое-либо из перечисленных значений, возвращается код 404"""
                     return web.Response(status=404)
 
         except Exception as ex:
+            """Возврат ответа 500, если происходит какая либо непредвиденная ошибка"""
             print(ex, "post_request_error")
             return web.Response(status=500)
 
+    """Ниже перечислены методы, которые выполняются при получении определенного запроса"""
+
+    """Логин пользователя"""
     async def login_def(self, login, password):
         try:
-
             request = f'SELECT * FROM Users WHERE Login = "{login}" AND Password = "{password}" '
             if not await self.sql_request_users(request):
                 return web.Response(status=404)
@@ -97,6 +104,7 @@ class Server_http(web.View):
             print(ex, "login_error")
             return web.Response(status=500)
 
+    """Регистрация пользователя"""
     async def registration_def(self, email, login, password):
         try:
             request = f'SELECT * FROM Users WHERE Login = "{login}" OR Email = "{email}"'
@@ -121,6 +129,7 @@ class Server_http(web.View):
             print(ex, "registration_error")
             return web.Response(status=550)
 
+    """Веривикация регистрации пользователя"""
     async def verification(self, email, login, password, check_str):
         try:
 
@@ -137,6 +146,7 @@ class Server_http(web.View):
             print(ex, "verification_error")
             return web.Response(status=500)
 
+    """Пользователь отправил сообщение"""
     async def message_def(self, from_user, to_user, message_text):
         try:
             request = f'INSERT INTO Messages VALUES(Null, "{from_user}", "{to_user}", "{message_text}")'
@@ -146,6 +156,7 @@ class Server_http(web.View):
             print(ex, "message_def error")
             web.Response(status=500)
 
+    """Проверка наличия сообщений в чате между пользователями"""
     async def check_messages(self, from_user, to_user):
         # print("check_messages")
         request = f'SELECT * FROM Messages WHERE From_user = "{from_user}" AND To_user = "{to_user}" OR From_user = "{to_user}" AND To_user = "{from_user}"'
@@ -163,12 +174,14 @@ class Server_http(web.View):
         else:
             return web.Response(status=404)
 
+    """Удаление колонки верификации регистрации. Происходит, если пользователь отменил регистрацию или прошел ее"""
     async def email_verification_delete(self, email, login):
 
         request = f'DELETE FROM Verification WHERE Email = "{email}" AND Login = "{login}"'
         await self.sql_request_users(request)
         return web.Response(status=200)
 
+    """Пользователь отправляет запрос в друзья"""
     async def friendship_request(self, from_user, to_user):
         request = f'SELECT * FROM Friends WHERE User_1 = "{from_user}" AND User_2 = "{to_user}" OR User_1 = "{to_user}" AND User_2 = "{from_user}"'
         if not await self.sql_request_users(request):
@@ -186,6 +199,7 @@ class Server_http(web.View):
         else:
             return web.Response(status=406)
 
+    """Проверка запросов в друзья"""
     async def friendship_requests_check(self, login):
         request = f'SELECT * FROM Friendship_requests WHERE To_user = "{login}"'
         # print(await self.sql_request_users(request))
@@ -196,6 +210,7 @@ class Server_http(web.View):
             print(from_user)
             return web.Response(status=200, text=f"{from_user[1]}")
 
+    """Пользователь принял запрос в друзья"""
     async def friendship_requests_check_yes(self, to_login, from_login):
         request = f'SELECT * FROM Friendship_requests WHERE To_user = "{to_login}" AND From_user = "{from_login}"'
         # print(from_login, to_login)
@@ -210,11 +225,13 @@ class Server_http(web.View):
 
             return web.Response(status=200)
 
+    """Пользователь отклонил запрос в друзья"""
     async def friendship_requests_check_no(self, to_login, from_login):
         request = f'DELETE FROM Friendship_requests WHERE To_user = "{to_login}" AND From_user = "{from_login}" '
         await self.sql_request_users(request)
         return web.Response(status=200)
 
+    """Проверка существования друзей пользователя"""
     async def friends_check(self, login):
         request = f'SELECT * FROM Friends WHERE User_1 = "{login}" OR User_2 = "{login}"'
         conn = await connect("./database.sqlite")
@@ -234,13 +251,13 @@ class Server_http(web.View):
         else:
             return web.Response(status=404)
 
+    """Пользователь удалил другого пользователя из друзей"""
     async def delete_friend(self, from_login, delete_login):
         request = f'DELETE FROM Friends WHERE User_1 = "{from_login}" AND User_2 = "{delete_login}" OR User_1 = "{delete_login}" AND User_2 = "{from_login}"'
         await self.sql_request_users(request)
         return web.Response(status=200)
 
-    """----------------------------------------sql запросы---------------------------------------"""
-
+    """Здесь происходит обработка и выполнение большинства запросов базы данных"""
     async def sql_request_users(self, request):
         try:
             conn = await connect("./database.sqlite")
@@ -260,6 +277,7 @@ class Server_http(web.View):
 
 
 if __name__ == "__main__":
+    """Запуск сервера"""
     app = web.Application()
     app.router.add_view('/{path}', Server_http)
     app.router.add_view('', Server_http)
