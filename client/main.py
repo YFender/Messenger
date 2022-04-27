@@ -29,6 +29,7 @@ class MyWin(QtWidgets.QMainWindow):
         """Создание коллекций для последующего хранения списка контактов и сообщений"""
         self.contacts_list = []
         self.messages = {}
+        self.selected_contact = None
 
         """Скрытие и отключение отдельных элементов интерфейса перед авторизацией"""
         self.ui.label_unlog.hide()
@@ -174,11 +175,14 @@ class MyWin(QtWidgets.QMainWindow):
 
     """Функция, выполняющаяся, если пользователь кликнул на контакт"""
     def select_contact(self):
-        self.selected_contact = self.ui.listWidget_contacts.currentRow()
+        if self.selected_contact != self.ui.listWidget_contacts.currentRow():
+            self.selected_contact = self.ui.listWidget_contacts.currentRow()
+
+            self.check_messages()
 
         self.ui.pushButton_delete_user.setEnabled(True)
         self.ui.pushButton_send_message.setEnabled(True)
-        self.check_messages()
+
 
     """Функция разлогирования"""
     def unlog(self):

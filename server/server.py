@@ -111,9 +111,11 @@ class Server_http(web.View):
             if not await self.sql_request_users(request):
                 check_str = ''.join([choice(ascii_uppercase + digits) for _ in range(6)])
 
-                email_server = SMTP_SSL("smtp.mail.ru", 465)
-                email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
-                email_server.sendmail("yfen_python@mail.ru", email,
+                # email_server = SMTP_SSL("smtp.mail.ru", 465)
+                email_server = SMTP_SSL("smtp.gmail.com", 465)
+                # email_server.login("yfen_python@mail.ru", "1UYJ5rCiuKbqKJyFLGtB")
+                email_server.login("yurik2159@gmail.com", "gcsmzcnjtrptysqv")
+                email_server.sendmail("yurik2159@gmail.com", email,
                                       f'Subject: Подтвердите свою регистрацию в YFenMessenger\nВаш код подтверждения: {check_str}'.encode(
                                           "utf-8"))
 
