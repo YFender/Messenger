@@ -442,8 +442,11 @@ class MyWin(QtWidgets.QMainWindow):
                                 """Перерыв 200 мс"""
                                 sleep(200)
 
+                        """Перепроверка сообщений"""
                         data = response.json()
+                        """Если уже имеются сообщения"""
                         if self.messages:
+                            """Если последние сообщения различаются"""
                             if deque(self.messages)[-1] != deque(data)[-1]:
                                 self.ui.textBrowser_chat.clear()
                                 self.messages = data
@@ -525,7 +528,7 @@ class Login(QtWidgets.QWidget):
                             self.parent.timer_check_messages.start(1000)
                             self.parent.timer_check_old_contacts.start(10000)
 
-                            """Если какая-то информация не верна"""
+                            """Если какая-либо информация не верна"""
                         elif response.status_code == 404:
                             closemes = QtWidgets.QMessageBox()
                             closemes.setWindowTitle("Ошибка")
@@ -653,7 +656,7 @@ class Registration(QtWidgets.QWidget):
                         closemes = QtWidgets.QMessageBox()
                         closemes.setWindowTitle("Ошибка")
                         closemes.setText(
-                            "Адрес электронной почты имеет формат или/и содержит запрещенные символы")
+                            "Адрес электронной почты не соответствует формату или/и содержит запрещенные символы")
                         closemes.buttonClicked.connect(closemes.close)
                         closemes = closemes.exec_()
                 else:
@@ -701,20 +704,26 @@ class Email_dialog(QtWidgets.QWidget):
         self.login = self.parent.ui.lineEdit_login.text().lower()
         self.password = self.parent.ui.lineEdit_password.text()
 
+    """Функция отправки кода верификации на подтверждение"""
     def send_verification(self):
+        """Если форма заполнения не пуста"""
         if self.ui.lineEdit.text() != "":
             try:
                 self.check_str = self.ui.lineEdit.text().upper()
+                """Отправка запроса с информацией о email, логине, пароле и коде верификации"""
                 response = post(f"{response_address}/email_verification", data={
                     "email": self.email, "login": self.login, "password": self.password, "check_str": self.check_str})
 
+                """Если сервер получил запрос и удовлетворен"""
                 if response.status_code == 200:
+                    """Добавление логина и пароля в БД пользователя для автоматического логина"""
                     conn = connect("./user_log.sqlite")
                     cursor = conn.cursor()
                     cursor.execute(f'INSERT INTO User_log VALUES ("{self.login}", "{self.password}")')
                     conn.commit()
                     conn.close()
 
+                    """Запуск таймеров для проверки новых контактов, запросов в друзья и сообщений"""
                     self.parent.parent.timer_check_new_contacts.start(5000)
                     self.parent.parent.timer_check_messages.start(1000)
                     self.parent.parent.timer_check_old_contacts.start(10000)
@@ -728,7 +737,7 @@ class Email_dialog(QtWidgets.QWidget):
                     closemes = closemes.exec_()
 
 
-
+                    """Если сервер заявляет, что код подтверждения не совпадает"""
                 elif response.status_code == 403:
                     closemes = QtWidgets.QMessageBox()
                     closemes.setWindowTitle("Ошибка")
@@ -737,7 +746,9 @@ class Email_dialog(QtWidgets.QWidget):
                     closemes.buttonClicked.connect(
                         closemes.close)
                     closemes = closemes.exec_()
+
             except Exception as ex:
+                """Непредвиденная ошибка"""
                 print(ex)
                 closemes = QtWidgets.QMessageBox.critical(
                     self, "Ошибка", "Ошибка подключения")
@@ -745,17 +756,21 @@ class Email_dialog(QtWidgets.QWidget):
                     closemes.close)
                 closemes = closemes.exec_()
 
+    """Если пользователь закрыл окно верификации"""
     def closeEvent(self, event):
+        """Скрытие лишних интерфейсов"""
         self.hide()
         self.parent.close()
         try:
+            """Попытка автологина"""
             self.parent.parent.auto_login_def()
             post(f"{response_address}/email_verification_delete",
                  data={"email": self.email, "login": self.login})
         except:
+            """Если происходит какая-либо ошибка, то ничего не происходит"""
             pass
 
-
+"""Класс диалогового окна подтверждения заявки в друзья"""
 class Check_contacts_dialog(QtWidgets.QDialog):
     def __init__(self, parent=MyWin, from_user=None):
         super().__init__(parent)
@@ -766,6 +781,7 @@ class Check_contacts_dialog(QtWidgets.QDialog):
 
         QBtn = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
 
+        """Формирование диалогового окна"""
         self.buttonBox = QtWidgets.QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
@@ -775,35 +791,43 @@ class Check_contacts_dialog(QtWidgets.QDialog):
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
 
+    """Если пользователь принял заявку"""
     def accept(self) -> None:
         try:
+            """Отправка запроса серверу с подтверждением заявки"""
             response = post(f"{response_address}/friendship_requests_check_yes",
                             data={"to_login": self.parent.login, "from_login": self.from_user})
-            # print(response.status_code)
+
+            """Если сервер получил запрос и был удовлетворен"""
             if response.status_code == 200:
+                """Добавление пользователя в список друзей"""
                 self.parent.ui.listWidget_contacts.addItem(self.from_user)
                 self.parent.contacts_list.append(self.from_user)
 
+                """Перепроверка контактов и проверка новых запросов"""
                 self.parent.check_old_contacts()
                 self.parent.check_new_contacts()
 
                 self.hide()
+
             else:
-                # print(response.status_code)
+                """Если сервер прислал ответ, отличный от удовлетворительного"""
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText("Неизвестная ошибка")
                 closemes.buttonClicked.connect(closemes.hide)
                 closemes = closemes.exec_()
+
         except Exception as ex:
             print(ex)
 
+    """Если пользователь отклонил заявку"""
     def reject(self) -> None:
+        """Отправка серверу запроса с отклонением заяки"""
         response = post(f"{response_address}/friendship_requests_check_no", data={"to_login": self.parent.login, "from_login": self.from_user})
         self.hide()
-        # self.parent.check_new_contacts()
 
-
+"""Класс диалогового окна с подтверждением удаления пользователя"""
 class Delete_contact_dialog(QtWidgets.QDialog):
     def __init__(self, parent=MyWin):
         super().__init__(parent)
@@ -813,6 +837,7 @@ class Delete_contact_dialog(QtWidgets.QDialog):
 
         QBtn = QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel
 
+        """Формирование интерфейса диалогового окна"""
         self.buttonBox = QtWidgets.QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
@@ -823,39 +848,50 @@ class Delete_contact_dialog(QtWidgets.QDialog):
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
 
+    """Если пользователь подтвердил удаление"""
     def accept(self) -> None:
         try:
             self.parent.ui.textBrowser_chat.clear()
 
+            """Отправка запроса серверу на удаление пользователя из друзей"""
             response = post(f"{response_address}/delete_friend",
                             data={"from_login": self.parent.login,
                                   "delete_login": self.parent.ui.listWidget_contacts.currentItem().text()})
+
+            """Если сервер получил и успешно выполнил запрос"""
             if response.status_code == 200:
+                """Обход циклом по внутреннему списку друзей с поиском удаляемого пользователя"""
                 for i in self.parent.contacts_list:
+                    """Если удаляемый пользователь найден"""
                     if i == self.parent.ui.listWidget_contacts.currentItem().text():
+                        """Удаление его из внутреннего списка и прерывание цикла"""
                         self.parent.contacts_list.pop(self.parent.ui.listWidget_contacts.currentRow())
                         break
 
+                """удаление пользователя из виджета списка друзей"""
                 self.parent.ui.listWidget_contacts.takeItem(self.parent.ui.listWidget_contacts.currentRow())
 
+                """Скрытие окна"""
                 self.hide()
 
+                """Если друзей не осталось"""
                 if self.parent.ui.listWidget_contacts.count() == 0:
+                    """Блокировка кнопок отправки сообщений и удаления"""
                     self.parent.ui.pushButton_send_message.setEnabled(False)
                     self.parent.ui.pushButton_delete_user.setEnabled(False)
 
-
-                # self.parent.check_old_contacts()
+                """Если сервер прислал ответ, отличный от удовлетворительного"""
             else:
                 closemes = QtWidgets.QMessageBox()
                 closemes.setWindowTitle("Ошибка")
                 closemes.setText("Неизвестная ошибка")
                 closemes.buttonClicked.connect(self.hide)
                 closemes = closemes.exec_()
+
         except Exception as ex:
             print(ex)
 
-
+"""Иницализация программы и ее запуск"""
 if __name__ == "__main__":
     app = QtWidgets.QApplication(argv)
     myapp = MyWin()
