@@ -42,7 +42,7 @@ class Server_http(web.View):
             """получение данных от пользователя"""
             data = await self.request.post()
 
-            """Проверка пути запроса с помощью метода множественного выбора"""
+            """Проверка пути запроса с помощью оператора множественного выбора"""
             match path:
                 case "login":
                     return await self.login_def(str(data['login']), str(data['password']))
