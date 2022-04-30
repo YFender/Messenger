@@ -176,6 +176,7 @@ class MyWin(QtWidgets.QMainWindow):
     """Функция, выполняющаяся, если пользователь кликнул на контакт"""
     def select_contact(self):
         if self.selected_contact != self.ui.listWidget_contacts.currentRow():
+            self.ui.textBrowser_chat.clear()
             self.selected_contact = self.ui.listWidget_contacts.currentRow()
 
             self.check_messages()
